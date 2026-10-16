@@ -21,6 +21,7 @@ import { fatigueOf } from '../lib/recovery.js'
 import { FATIGUE_LEVELS } from '../lib/recovery-view.js'
 import { MUSCLE_NAME } from '../lib/muscles.js'
 import Ring from '../components/Ring.jsx'
+import WeekSummary from '../components/WeekSummary.jsx'
 import WeekGrid from '../components/WeekGrid.jsx'
 import BodyMap from '../components/BodyMap.jsx'
 
@@ -185,7 +186,7 @@ export default function Home() {
         </Button>
       </div>}
     </div>
-    {/* slot: WeekSummary */}
+    <WeekSummary />
 
     {!S.routines.length && !S.active && (
       <div className="card home-welcome">
