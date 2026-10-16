@@ -27,6 +27,7 @@ import { handleFor } from './handle.js';
 import { fetchFor } from './node-fetch.js';
 import { canDropPrivileges, unprivilegedIds } from './adapters/spawn.js';
 import { cohortForPayload, invalidate as invalidateCohort } from './cohort.js';
+import { clearChat } from './chat-store.js';
 
 // The prompt assembly, the plan fingerprint and the invoke→parse→validate→repair loop all
 // live in ./core now, where the phone can import them too. Re-exported so nothing that
@@ -70,6 +71,7 @@ function patchUser(uid, patch) {
  *  and either way finishes without writing anything back (see finish). */
 export function clearUser(uid) {
   try { fs.unlinkSync(userFile(uid)); } catch { /* nothing to clear */ }
+  clearChat(uid);
   const queued = queue.findIndex(j => j.uid === uid);
   if (queued >= 0) { queue.splice(queued, 1); inflight.delete(uid); live.delete(uid); }
   aborts.get(uid)?.abort();
@@ -171,21 +173,10 @@ export function clampMessage(text) {
 }
 
 /**
- * Enqueue a job. Throws CoachError with a code the routes layer maps to an HTTP status:
- * `off`, `busy`, `cap`, `consent`.
+ * What every provider call made on a profile's behalf passes first (jobs and chat alike):
+ * consent, then whose account pays. Returns the profile's synced state. Throws CoachError.
  */
-export function enqueue(uid, opts) {
-  if (!cfgStore.isEnabled() || !cfgStore.isConnected()) throw new CoachError('off', 'the Coach is not set up on this instance');
-  // A client that lost the answer to its start (phone locked mid-request) retries with the same
-  // `requestId`: hand back the job it already started, running or finished, and spend nothing more.
-  const rid = opts.requestId ? String(opts.requestId).replace(/[^\w-]/g, '').slice(0, 64) : null;
-  if (rid) {
-    if (live.get(uid)?.rid === rid) return { id: live.get(uid).id };
-    const done = (readUser(uid).history || []).find(h => h.rid === rid);
-    if (done) return { id: done.id };
-  }
-  if (inflight.has(uid)) throw new CoachError('busy', 'the Coach is already thinking about your training');
-
+export function authorize(uid) {
   const S = readState(uid);
   // Consent is enforced here, server-side, not by the screen that collects it: a UI-only gate
   // is not a gate (FR-08/13).
@@ -203,6 +194,33 @@ export function enqueue(uid, opts) {
   // Spending is what binds: a personal credential (setup token, OAuth) belongs to the first
   // profile that runs a job on it from here on; an API key binds to nobody and is shared.
   cfgStore.bindInstanceCredential(uid);
+  return S;
+}
+
+/** One provider call against the instance's daily cap: refuse past it, else count it. */
+export function chargeInstance() {
+  const caps = cfgStore.load().caps || {};
+  if (caps.instanceDaily > 0 && instanceUsedToday() >= caps.instanceDaily) throw new CoachError('cap', 'this instance has reached its daily limit');
+  bumpInstanceDaily();
+}
+
+/**
+ * Enqueue a job. Throws CoachError with a code the routes layer maps to an HTTP status:
+ * `off`, `busy`, `cap`, `consent`.
+ */
+export function enqueue(uid, opts) {
+  if (!cfgStore.isEnabled() || !cfgStore.isConnected()) throw new CoachError('off', 'the Coach is not set up on this instance');
+  // A client that lost the answer to its start (phone locked mid-request) retries with the same
+  // `requestId`: hand back the job it already started, running or finished, and spend nothing more.
+  const rid = opts.requestId ? String(opts.requestId).replace(/[^\w-]/g, '').slice(0, 64) : null;
+  if (rid) {
+    if (live.get(uid)?.rid === rid) return { id: live.get(uid).id };
+    const done = (readUser(uid).history || []).find(h => h.rid === rid);
+    if (done) return { id: done.id };
+  }
+  if (inflight.has(uid)) throw new CoachError('busy', 'the Coach is already thinking about your training');
+
+  authorize(uid);
 
   // The privilege drop is what keeps a provider runtime out of ./data. If it cannot be
   // performed, there is no job — see canDropPrivileges for why this is not a warning either.
@@ -212,12 +230,9 @@ export function enqueue(uid, opts) {
     if (!priv.ok) throw new CoachError('unprivileged', `Coach jobs are disabled: ${priv.why}`);
   }
 
-  const caps = cfgStore.load().caps || {};
-  if (caps.instanceDaily > 0 && instanceUsedToday() >= caps.instanceDaily) throw new CoachError('cap', 'this instance has reached its daily limit');
-
   // Counted at enqueue, not at completion: the instance cap bounds what the owner's provider
   // account can spend, and queueing twenty jobs spends it whether or not the twentieth finishes.
-  bumpInstanceDaily();
+  chargeInstance();
 
   const job = {
     id: crypto.randomBytes(8).toString('hex'),

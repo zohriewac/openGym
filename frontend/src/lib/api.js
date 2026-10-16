@@ -47,6 +47,15 @@ const TIMEOUT_MS = 60000
 
 const failure = (message, code, status) => Object.assign(new Error(message), { code, status })
 
+/** Where api() would send `path`, and the auth headers it would carry, for a caller that needs
+ *  the raw Response (the Coach's streamed reply). Throws as api() does on an unpaired phone. */
+export function apiTarget(path) {
+  if (MOBILE && !remoteBase) throw failure(t('This phone is not connected to a server.'), 'not-paired', 0)
+  // A paired phone has an absolute base of its own; everyone else is relative to where the app
+  // is served, so a subpath deployment reaches its own API instead of the proxy's root.
+  return { url: remoteBase ? remoteBase + path : appBase().replace(/\/$/, '') + path, headers: remoteHeaders() }
+}
+
 export async function api(path, opts) {
   const { timeout, ...init } = opts || {}
   // A phone with no server to talk to: local mode, or a pairing that is gone. There is no
@@ -54,11 +63,8 @@ export async function api(path, opts) {
   // server, which answers ANY path, PUT included, with index.html and a 200, so a push "landed"
   // there and the change was marked as synced while the server never saw it. status 0, not
   // undefined: this is not "offline", and the store must not show it as such.
-  if (MOBILE && !remoteBase) throw failure(t('This phone is not connected to a server.'), 'not-paired', 0)
-  const headers = Object.assign({ 'Content-Type': 'application/json' }, init.headers, remoteHeaders())
-  // A paired phone has an absolute base of its own; everyone else is relative to where the app
-  // is served, so a subpath deployment reaches its own API instead of the proxy's root.
-  const url = remoteBase ? remoteBase + path : appBase().replace(/\/$/, '') + path
+  const { url, headers: auth } = apiTarget(path)
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, init.headers, auth)
   const ms = timeout != null ? timeout : (init.method || 'GET').toUpperCase() === 'GET' ? TIMEOUT_GET_MS : TIMEOUT_MS
   return request(url, Object.assign({}, init, { headers }), ms)
 }

@@ -100,6 +100,63 @@ async function readJson(res) {
   try { return { data: JSON.parse(text), text }; } catch { return { data: null, text }; }
 }
 
+/** The `data:` payloads of a server-sent-events body, parsed, as they arrive. A transport with
+ *  no streaming body (the phone's native HTTP) hands over the whole text at once instead —
+ *  same events, delivered in one go, so a caller never needs a second code path. */
+function* frames(buf) {
+  for (const line of buf.split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue;
+    const raw = line.slice(5).trim();
+    if (!raw || raw === '[DONE]') continue;
+    try { yield JSON.parse(raw); } catch { /* a keep-alive or comment, not an event */ }
+  }
+}
+
+async function* sseEvents(res, idleMs, signal) {
+  const reader = res.body && typeof res.body.getReader === 'function' ? res.body.getReader() : null;
+  if (!reader) { yield* frames(await res.text()); return; }
+  const dec = new TextDecoder();
+  const stop = async err => { try { await reader.cancel(); } catch { /* already gone */ } throw err; };
+  let buf = '';
+  for (;;) {
+    let timer, onAbort;
+    // The abort that cancelled the request ended with its headers; the body needs its own listener.
+    const idle = new Promise((_, rej) => {
+      timer = setTimeout(() => rej(Object.assign(new Error('idle'), { idle: true })), idleMs);
+      onAbort = () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+      if (signal) { if (signal.aborted) onAbort(); else signal.addEventListener('abort', onAbort, { once: true }); }
+    });
+    let chunk;
+    try { chunk = await Promise.race([reader.read(), idle]); } catch (e) { await stop(e); } finally {
+      clearTimeout(timer);
+      if (signal) signal.removeEventListener('abort', onAbort);
+    }
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, { stream: true });
+    const cut = buf.lastIndexOf('\n\n');
+    if (cut >= 0) { yield* frames(buf.slice(0, cut)); buf = buf.slice(cut + 2); }
+  }
+  yield* frames(buf);
+}
+
+/** Drain a streaming answer into text, calling `onDelta` per piece. Never throws. */
+async function consume(spec, res, onDelta, idleMs, signal) {
+  let text = '';
+  try {
+    for await (const evt of sseEvents(res, idleMs, signal)) {
+      const d = spec.readDelta(evt);
+      if (d.error) return { code: 1, text, stderr: trim(d.error, 280) };
+      if (d.truncated) return { code: 1, text, stderr: 'the answer was cut off at the output limit', truncated: true };
+      if (d.text) { text += d.text; onDelta(d.text); }
+    }
+  } catch (e) {
+    if (e.idle) return { code: -1, text, stderr: 'timed out', timedOut: true };
+    if (e.name === 'AbortError' || (signal && signal.aborted)) return { code: -1, text, stderr: 'cancelled', cancelled: true };
+    return { code: 1, text, stderr: `the stream broke: ${trim(e.message, 120)}` };
+  }
+  return { code: 0, text: text.trim(), stderr: '' };
+}
+
 export function httpAdapter(spec) {
   const id = spec.id;
   const meta = HTTP_PROVIDERS[id];
@@ -180,8 +237,8 @@ export function httpAdapter(spec) {
      * and nothing else is read from it; `fetch` is injectable so the phone can route through
      * native HTTP and a test can hand in a fake.
      */
-    async invoke(opts = {}) {
-      const { cfg, prompt, system, schema, env, model, timeoutMs = DEFAULT_TIMEOUT_MS, maxTokens = MAX_OUTPUT_TOKENS, fetch: fetchImpl = globalThis.fetch, signal } = opts;
+    async invoke(opts = {}, onDelta) {
+      const { cfg, prompt, system, schema, env, model, messages = null, chat = false, timeoutMs = DEFAULT_TIMEOUT_MS, maxTokens = MAX_OUTPUT_TOKENS, fetch: fetchImpl = globalThis.fetch, signal } = opts;
       const base = adapter.baseUrl(cfg);
       if (!base) return { code: -1, text: '', stderr: `no endpoint configured for ${id}`, spawnError: true };
       const key = keyOf(env);
@@ -189,13 +246,15 @@ export function httpAdapter(spec) {
       const chosen = model || meta.defaultModel;
       if (!chosen) return { code: 1, text: '', stderr: `no model chosen for ${id} (pick one from the list the endpoint serves)` };
 
-      let body = spec.body({ model: chosen, prompt, system: system || null, schema: schema || null, maxTokens });
+      // Streaming is a chat feature, for providers that describe how to read it.
+      const stream = chat && typeof onDelta === 'function' && typeof spec.readDelta === 'function';
+      let body = spec.body({ model: chosen, prompt, system: system || null, schema: schema || null, maxTokens, messages, chat, stream });
       let retriedWithoutJsonMode = false;
       let transientRetries = 0;
       for (;;) {
         let res;
         try {
-          res = await reach(spec, base, spec.path(chosen), url => call(fetchImpl, url, {
+          res = await reach(spec, base, stream && spec.streamPath ? spec.streamPath(chosen) : spec.path(chosen), url => call(fetchImpl, url, {
             method: 'POST',
             headers: { ...extraHeadersFor(id, cfg), 'content-type': 'application/json', ...spec.headers(key) },
             body: JSON.stringify(body)
@@ -204,6 +263,7 @@ export function httpAdapter(spec) {
           if (e.name === 'AbortError') return { code: -1, text: '', stderr: 'timed out', timedOut: true };
           return { code: 1, text: '', stderr: `could not reach ${hostOf(base)}: ${trim(e.message, 200)}` };
         }
+        if (stream && res.ok) return consume(spec, res, onDelta, timeoutMs, signal);
         const { data, text } = await readJson(res);
         if (!res.ok) {
           const msg = spec.errorMessage(data) || trim(text, 200);
@@ -213,7 +273,7 @@ export function httpAdapter(spec) {
             continue;
           }
           // Some OpenAI-compatible servers reject the JSON-mode flag outright. Once, without it.
-          if (res.status === 400 && spec.withoutJsonMode && !retriedWithoutJsonMode && /response_format|json_schema|json_object|json mode|structured/i.test(msg)) {
+          if (res.status === 400 && !chat && spec.withoutJsonMode && !retriedWithoutJsonMode && /response_format|json_schema|json_object|json mode|structured/i.test(msg)) {
             body = spec.withoutJsonMode(body);
             retriedWithoutJsonMode = true;
             continue;
@@ -228,5 +288,9 @@ export function httpAdapter(spec) {
       }
     }
   };
+  /** A conversation turn: `messages` ([{ role: 'user'|'assistant', content }]) under `system`,
+   *  free text back. With `onDelta` the answer streams where the provider can; otherwise it
+   *  arrives whole. The return shape is invoke's. */
+  adapter.chat = (opts, onDelta) => adapter.invoke({ ...opts, chat: true }, onDelta);
   return adapter;
 }

@@ -10,11 +10,21 @@ export const geminiSpec = {
   headers: key => ({ 'x-goog-api-key': key }),
   // No responseSchema on purpose: Gemini's OpenAPI subset rejects the type unions our schemas
   // use for before/after, and json mime plus the validator already holds the line.
-  body: ({ prompt, system, maxTokens }) => ({
-    systemInstruction: { parts: [{ text: system ? SYSTEM_PROMPT + '\n\n' + system : SYSTEM_PROMPT }] },
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: 'application/json', maxOutputTokens: maxTokens }
+  body: ({ prompt, system, maxTokens, messages, chat }) => ({
+    systemInstruction: { parts: [{ text: chat ? system : system ? SYSTEM_PROMPT + '\n\n' + system : SYSTEM_PROMPT }] },
+    contents: (messages || [{ role: 'user', content: prompt }])
+      .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+    generationConfig: { ...(chat ? {} : { responseMimeType: 'application/json' }), maxOutputTokens: maxTokens }
   }),
+  streamPath: model => `/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`,
+  readDelta: evt => {
+    if (evt.error) return { error: evt.error.message || 'the provider stopped the stream' };
+    const cand = (evt.candidates || [])[0];
+    if (!cand) return evt.promptFeedback && evt.promptFeedback.blockReason ? { error: `the request was blocked: ${evt.promptFeedback.blockReason}` } : {};
+    const text = ((cand.content && cand.content.parts) || []).map(p => p.text || '').join('');
+    if (cand.finishReason === 'MAX_TOKENS') return { truncated: true };
+    return text ? { text } : {};
+  },
   errorMessage: data => data && data.error && data.error.message,
   readText: data => {
     const cand = (data.candidates || [])[0];

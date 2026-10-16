@@ -17,14 +17,24 @@ export const anthropicSpec = {
   }),
   // The rules block is marked cacheable: identical for every job of a task, so subsequent
   // jobs read it from Anthropic's prompt cache at a tenth of the input price.
-  body: ({ model, prompt, system, maxTokens }) => ({
+  // A chat turn carries its own system prompt (free text, not the JSON-only one) and the whole
+  // message history; `stream` asks for server-sent events.
+  body: ({ model, prompt, system, maxTokens, messages, chat, stream }) => ({
     model,
     max_tokens: maxTokens,
     system: system
-      ? [{ type: 'text', text: SYSTEM_PROMPT + '\n\n' + system, cache_control: { type: 'ephemeral' } }]
+      ? [{ type: 'text', text: chat ? system : SYSTEM_PROMPT + '\n\n' + system, cache_control: { type: 'ephemeral' } }]
       : SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }]
+    messages: messages || [{ role: 'user', content: prompt }],
+    ...(stream ? { stream: true } : {})
   }),
+  readDelta: evt => {
+    if (evt.type === 'content_block_delta' && evt.delta && evt.delta.type === 'text_delta') return { text: evt.delta.text };
+    if (evt.type === 'message_delta' && evt.delta && evt.delta.stop_reason === 'max_tokens') return { truncated: true };
+    if (evt.type === 'message_delta' && evt.delta && evt.delta.stop_reason === 'refusal') return { error: 'the model declined this request' };
+    if (evt.type === 'error') return { error: (evt.error && evt.error.message) || 'the provider stopped the stream' };
+    return {};
+  },
   errorMessage: data => data && data.error && data.error.message,
   readText: data => {
     if (data.stop_reason === 'refusal') return { error: 'the model declined this request' + (data.stop_details && data.stop_details.explanation ? ': ' + data.stop_details.explanation : '') };
