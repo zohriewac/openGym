@@ -627,7 +627,7 @@ export default {
   'Shins': 'İncik',
   // --- import from another app ---
   'Import from another app': 'Başka uygulamadan içe aktar',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes, Strong, Hevy ya da Apple Health’ten vücut ağırlığı',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes, Strong, Hevy ya da Apple Health’ten vücut ağırlığı / Garmin Connect',
   'Import from {0}': '{0} uygulamasından içe aktar',
   'Import history': 'Geçmişi içe aktar',
   'Weigh-ins': 'Tartımlar',

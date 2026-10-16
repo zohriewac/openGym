@@ -627,7 +627,7 @@ export default {
   'Shins': 'Tibiali',
   // --- import from another app ---
   'Import from another app': 'Importa da un\'altra app',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes, Strong, Hevy o il peso da Apple Salute',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes, Strong, Hevy o il peso da Apple Salute / Garmin Connect',
   'Import from {0}': 'Importa da {0}',
   'Import history': 'Importa lo storico',
   'Weigh-ins': 'Pesate',

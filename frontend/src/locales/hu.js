@@ -628,7 +628,7 @@ export default {
   'Shins': 'Sípcsont',
   // --- import from another app ---
   'Import from another app': 'Importálás másik appból',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes, Strong, Hevy vagy testsúly az Apple Healthből',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes, Strong, Hevy vagy testsúly az Apple Healthből / Garmin Connect',
   'Import from {0}': 'Importálás innen: {0}',
   'Import history': 'Előzmények importálása',
   'Weigh-ins': 'Mérések',

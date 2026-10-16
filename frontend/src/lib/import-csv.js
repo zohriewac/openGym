@@ -706,6 +706,7 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
   const out = new Map()          // iso date -> { w, t }  (one weigh-in per day, the last)
   const hr = new Map()           // iso date -> { bpm, t }  resting heart rate, the last of the day
   let fileUnit = ''
+  let garmin = false
 
   if (s.includes('HKQuantityTypeIdentifierBodyMass') || s.includes('HKQuantityTypeIdentifierRestingHeartRate')) {
     const re = /<Record[^>]*type="HKQuantityTypeIdentifierBodyMass"[^>]*>/g
@@ -734,9 +735,13 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
       if (when && isFinite(bpm) && bpm > 0 && bpm < 250) hr.set(when.d, { bpm: Math.round(bpm), t: new Date(dt[1]).getTime() || null })
     }
   } else {
-    const rows = parseCSV(s)
+    let rows = parseCSV(s)
     if (rows.length < 2) return { error: 'empty' }
+    // Garmin Connect's weight export can open with a title line before the header.
+    const h0 = rows.findIndex(r => mapHeader(r).date !== undefined)
+    if (h0 > 0 && h0 < 3) rows = rows.slice(h0)
     const map = mapHeader(rows[0])
+    garmin = map.time !== undefined && ['bmi', 'body fat', 'skeletal muscle mass', 'body water'].some(n => rows[0].some(h => norm(h) === n))
     // a weight-only CSV: whichever weight column it has
     const wCol = map.weightKg ?? map.weightLb ?? map.weight
     const dCol = map.date ?? map.startTime
@@ -745,9 +750,17 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
     else if (map.weightLb !== undefined) fileUnit = 'lb'
     for (let i = 1; i < rows.length; i++) {
       const when = parseWhen(String(rows[i][dCol] ?? ''))
-      const w = num(rows[i][wCol])
-      if (!when || !w || !bodyOk(w, fileUnit || unit)) continue
-      out.set(when.d, { w, t: new Date(when.d).getTime() + (when.t ?? 0) })
+      const cellW = String(rows[i][wCol] ?? '')
+      const w = num(cellW)
+      // Garmin writes the unit into the cell ("82.1 kg", "181.0 lbs"), per row.
+      const rowUnit = /lb/i.test(cellW) ? 'lb' : /kg/i.test(cellW) ? 'kg' : ''
+      if (!when || !w || !bodyOk(w, rowUnit || fileUnit || unit)) continue
+      // The weigh-in's own clock time (a separate column in Garmin's CSV) is what the graph
+      // splits morning from evening on, so it must survive; date-only rows keep the old t.
+      const clock = garmin && /(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap])?/i.exec(String(rows[i][map.time] ?? ''))
+      const mins = clock ? ((clock[3] ? +clock[1] % 12 + (/p/i.test(clock[3]) ? 12 : 0) : +clock[1]) * 60) + +clock[2] : null
+      const t = mins == null ? new Date(when.d).getTime() + (when.t ?? 0) : new Date(`${when.d}T00:00`).getTime() + mins * 60000
+      out.set(when.d, { w, unit: rowUnit, t })
     }
   }
 
@@ -764,7 +777,7 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
   }
   const dates = [...out.keys()].sort()
   return {
-    kind: 'bodyweight', source: 'Apple Health',
+    kind: 'bodyweight', source: garmin ? 'Garmin Connect' : 'Apple Health',
     bodyweight: dates.map(d => ({ d, w: conv(out.get(d)), t: out.get(d).t || new Date(d).getTime() })),
     restingHr: [...hr.keys()].sort().map(d => ({ d, bpm: hr.get(d).bpm, t: hr.get(d).t || new Date(d).getTime() })),
     fileUnit, converted, from: dates[0], to: dates[dates.length - 1],

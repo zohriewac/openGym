@@ -627,7 +627,7 @@ export default {
   'Shins': 'Piszczele',
   // --- import from another app ---
   'Import from another app': 'Importuj z innej aplikacji',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes, Strong, Hevy albo masa ciała z Apple Health',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes, Strong, Hevy albo masa ciała z Apple Health / Garmin Connect',
   'Import from {0}': 'Importuj z {0}',
   'Import history': 'Importuj historię',
   'Weigh-ins': 'Ważenia',

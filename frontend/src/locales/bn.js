@@ -710,7 +710,7 @@ export default {
   'Shins': 'শিন',
   // --- import from another app ---
   'Import from another app': 'অন্য অ্যাপ থেকে ইমপোর্ট করুন',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes, Strong, Hevy, অথবা Apple Health থেকে শরীরের ওজন',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes, Strong, Hevy, অথবা Apple Health থেকে শরীরের ওজন / Garmin Connect',
   'Import from {0}': '{0} থেকে ইমপোর্ট করুন',
   'Import history': 'ইতিহাস ইমপোর্ট করুন',
   'Weigh-ins': 'ওজন মাপা',

@@ -617,7 +617,7 @@ export default {
   'Shins': 'Голени',
   // --- import from another app ---
   'Import from another app': 'Импорт из другого приложения',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes, Strong, Hevy или вес тела из Apple Health',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes, Strong, Hevy или вес тела из Apple Health / Garmin Connect',
   'Import from {0}': 'Импорт из {0}',
   'Import history': 'Импорт истории',
   'Weigh-ins': 'Взвешивания',
