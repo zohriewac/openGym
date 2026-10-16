@@ -1644,12 +1644,12 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .hm-days span{height:11px;font-size:10px;color:var(--label-2);line-height:11px}
 .hm-grid{display:flex;gap:3px}
 .hm-col{display:flex;flex-direction:column;gap:3px}
-.hm-c{width:11px;height:11px;border-radius:3px;background:var(--surface-2);flex:none}
+.hm-c{width:11px;height:11px;border-radius:3.5px;background:var(--surface-2);flex:none}
 .hm-c.l1{background:color-mix(in srgb,var(--acc) 30%,var(--surface-2))}
 .hm-c.l2{background:color-mix(in srgb,var(--acc) 55%,var(--surface-2))}
 .hm-c.l3{background:color-mix(in srgb,var(--acc) 78%,var(--surface-2))}
 .hm-c.l4{background:var(--acc)}
-.hm-c.today{box-shadow:0 0 0 1.5px var(--acc)}
+.hm-c.today{box-shadow:0 0 0 1.5px var(--label-2)}
 .hm-c.future{opacity:.3}
 .hm-c.noted{box-shadow:inset 0 0 0 1.5px var(--indigo)}
 .hm-legend{
@@ -1670,11 +1670,11 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
    but invisible on a white card. */
 .bodymap{
   display:flex;gap:6px;justify-content:center;align-items:flex-start;
-  --bm-base:color-mix(in srgb,var(--label) 11%,var(--surface));
+  --bm-base:color-mix(in srgb,var(--label) 7%,var(--surface));
 }
 .bm-v{flex:1;min-width:0;height:auto;max-height:min(46vh,340px)}
 .bm-ph{height:200px}                       /* holds the space while the geometry loads */
-.bm-sil{fill:color-mix(in srgb,var(--label) 18%,var(--surface))}
+.bm-sil{fill:color-mix(in srgb,var(--label) 12%,var(--surface))}
 .bm-m{fill:var(--bm-base);transition:fill var(--med) var(--ease)}
 .bm-m.l1{fill:color-mix(in srgb,var(--acc) 32%,var(--bm-base))}
 .bm-m.l2{fill:color-mix(in srgb,var(--acc) 56%,var(--bm-base))}
@@ -1706,7 +1706,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .mrow .v{font-size:12px;color:var(--label-2);min-width:52px;text-align: end;flex:none}
 /* A headline number inside a card — tile weight without a tile around it, for the pair of
    readings at the top of the effort card. */
-.stat-v{font-size:26px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
+.stat-v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1.1}
 .mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .mchip{font-size:12px;padding:var(--sp-1) 9px;border-radius:99px;background:var(--surface-2);color:var(--label-2)}
 .mchip.miss{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
@@ -1717,10 +1717,16 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:8px}
 .dash-grid>.card{min-width:0}
 .dash-grid .card{margin:0;min-height:44px}
-.dash-num{font-size:24px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;line-height:1.1}
+.dash-num{font-size:26px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat-delta{font-size:var(--fs-xs);font-weight:600;font-variant-numeric:tabular-nums}
+.stat-delta.up{color:var(--green)} .stat-delta.down{color:var(--red)}
 .dash-bar{height:4px;border-radius:2px;background:var(--acc);margin-top:4px;max-width:100%}
 .dash-bar.prev{background:var(--surface-3)}
 .weekgrid rect.on{fill:var(--acc)} .weekgrid rect.off{fill:var(--surface-3)}
+.weekgrid rect.today{stroke:var(--label-2);stroke-width:1.5}
+.ring-arc{transform-box:fill-box}
+@media (prefers-reduced-motion:no-preference){.ring{animation:ring-in var(--med) var(--ease) both}}
+@keyframes ring-in{from{opacity:0;transform:rotate(-30deg)}to{opacity:1;transform:none}}
 .dash-bm{max-width:140px}
 .dash-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 @media (prefers-reduced-motion:no-preference){.dash-grid .card,.dash-card{animation:dash-in var(--med) var(--ease) both}}
@@ -1728,11 +1734,11 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .tile{background:var(--surface);border-radius:var(--r-card);padding:14px}
 .tile .l{
-  color:var(--label-2);font-size:var(--fs-sm);font-weight:400;letter-spacing:-.004em;
-  text-transform:none;display:flex;align-items:center;gap:5px;
+  color:var(--label-2);font-size:var(--fs-xs);font-weight:500;letter-spacing:.04em;
+  text-transform:uppercase;display:flex;align-items:center;gap:5px;
 }
 .tile .l .icn{font-size:14px;color:var(--label)}
-.tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1}
+.tile .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.03em;margin-top:5px;line-height:1.1}
 .tile.tappable:active{background:var(--surface-2)}
 
 /* --- PR badge --- */
