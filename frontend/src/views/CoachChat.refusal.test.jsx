@@ -48,6 +48,8 @@ vi.mock('../lib/coach-api.js', () => ({
   setCohortShare: vi.fn(() => Promise.resolve({ ok: true })),
   jobErrorText: () => 'err',
   JOB_ERRORS: { busy: 'the app’s busy line' },
+  chatHistory: vi.fn(() => Promise.resolve({ supported: false, busy: false, messages: [] })),
+  chatSend: vi.fn(), chatCancel: vi.fn(), chatClear: vi.fn(), chatWaitForReply: vi.fn(), chatErrorText: e => e.message,
 }))
 vi.mock('../sheets.jsx', () => ({ startFlow: vi.fn(), confirmSheet: vi.fn() }))
 vi.mock('../lib/api.js', () => ({

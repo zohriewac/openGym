@@ -29,13 +29,12 @@ import {
   changeTitle, changeValues, exName, canRevert, revertLast
 } from '../lib/coach.js'
 import { insightsFor, sessionInsights } from '../lib/coach-insights.js'
-import { useCoachStatus, requestReview, requestDebrief, requestPlan, refinePlan, resolvePending, cohortStats, setCohortShare, jobErrorText, awaitedJob, settleAwaited, JOB_ERRORS } from '../lib/coach-api.js'
+import { useCoachStatus, requestReview, requestDebrief, requestPlan, refinePlan, resolvePending, cohortStats, setCohortShare, jobErrorText, awaitedJob, settleAwaited, JOB_ERRORS, chatHistory, chatSend, chatCancel, chatClear, chatWaitForReply, chatErrorText } from '../lib/coach-api.js'
 import { confirmSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 import LineChart from '../components/LineChart.jsx'
 import CoachText from '../components/CoachText.jsx'
-import * as coachApi from '../lib/coach-api.js'
 import { Button, Check, Switch, Section, Row, SelectRow } from '../components/ui.jsx'
 import '../coach.css'
 
@@ -54,6 +53,10 @@ export default function CoachChat() {
   const [busy, setBusy] = useState(false)
   const endRef = useRef(null)
   const [away, setAway] = useState(false)
+  // Free-form chat (a question, not a review job) when the provider can do it; `live` is the
+  // reply streaming in right now, null when nothing is being written.
+  const [chatOk, setChatOk] = useState(false)
+  const [live, setLive] = useState(null)
   const prevJob = useRef(null)
   const coachMode = coachLocal?.mode
 
@@ -97,7 +100,25 @@ export default function CoachChat() {
     })
   }, [job, pending, loading, last?.id])
 
-  useEffect(() => { if (typeof endRef.current?.scrollIntoView === 'function') endRef.current.scrollIntoView({ block: 'end' }) }, [S.coach?.chat?.length, !!job, !!pending])
+  // Whether chat is available here, and a reply still being written when this screen opened
+  // (a reload or a locked phone mid-answer): the server finishes it, so wait for it to land.
+  useEffect(() => {
+    if (!ready) return
+    let gone = false
+    chatHistory().then(async h => {
+      if (gone) return
+      setChatOk(!!h?.supported)
+      if (!h?.busy) return
+      setLive('')
+      const done = await chatWaitForReply().catch(() => null)
+      const m = done?.messages?.at(-1)
+      if (!gone && m?.role === 'coach') update(s => appendChat(s, { role: 'coach', kind: 'text', text: m.text }))
+      if (!gone) setLive(null)
+    }).catch(() => {})
+    return () => { gone = true }
+  }, [ready])
+
+  useEffect(() => { if (typeof endRef.current?.scrollIntoView === 'function') endRef.current.scrollIntoView({ block: 'end' }) }, [S.coach?.chat?.length, !!job, !!pending, live])
 
   // Show "jump to latest" once the reader has scrolled well away from the newest message.
   useEffect(() => {
@@ -110,15 +131,34 @@ export default function CoachChat() {
   const coach = S.coach || emptyCoach()
   const community = !!config?.coach?.community && !DEMO && !(MOBILE && coachMode === 'byok')
 
+  // One chat turn: the question goes in the thread at once, the answer streams into `live` and
+  // is written to the thread when it lands. A dropped connection waits for the server's copy.
+  const talk = async msg => {
+    update(s => appendChat(s, { role: 'user', kind: 'text', text: msg }))
+    setLive('')
+    let reply = null
+    try {
+      reply = (await chatSend(msg, { onDelta: d => setLive(x => (x || '') + d) })).message?.text
+    } catch (e) {
+      if (e.code === 'network') reply = (await chatWaitForReply().catch(() => null))?.messages?.at(-1)?.text
+      if (!reply && e.partial) reply = e.partial
+      if (!reply) update(s => appendChat(s, { role: 'coach', kind: 'error', text: chatErrorText(e) }))
+    }
+    if (reply) update(s => appendChat(s, { role: 'coach', kind: 'text', text: reply }))
+    setLive(null)
+  }
+
   const send = async () => {
     const msg = text.trim()
-    if (!msg || busy) return
+    if (!msg || busy || live !== null) return
+    // A message about a proposed plan refines it. With no plan at all — the first attempt
+    // failed, or nothing was ever built — the message asks for one; a review would only
+    // answer that there is no workout to look at, which is how people got stuck.
+    const refine = pending?.kind === 'create' || !(S.routines || []).length
+    if (chatOk && !refine) { setText(''); return talk(msg) }
     setBusy(true)
     try {
-      // A message about a proposed plan refines it. With no plan at all — the first attempt
-      // failed, or nothing was ever built — the message asks for one; a review would only
-      // answer that there is no workout to look at, which is how people got stuck.
-      if (pending?.kind === 'create' || !(S.routines || []).length) await refinePlan(msg)
+      if (refine) await refinePlan(msg)
       else await requestReview(msg)
       update(s => appendChat(s, { role: 'user', kind: 'text', text: msg }))
       setText('')
@@ -145,22 +185,24 @@ export default function CoachChat() {
   const askDebrief = () => ask(() => requestDebrief(lastWorkout?.id || null), lastWorkout?.name
     ? t('How did my {0} session go?', lastWorkout.name)
     : t('How did my last workout go?'))
-  const askPrompt = label => ask(() => requestReview(label), label)
+  // A question is a chat turn where chat is available, a review job where it is not.
+  const askPrompt = label => chatOk ? talk(label) : ask(() => requestReview(label), label)
   // Retry re-asks the last thing the person said; with nothing to repeat it asks for a review.
   const retry = () => {
     const last = [...(coach.chat || [])].reverse().find(m => m.role === 'user' && m.kind === 'text')
     return last ? askPrompt(last.text) : askReview()
   }
-  // Feature-checked: the cancel call arrives with the newer coach-api; before that there is no Stop.
-  const cancelFn = (() => { try { return coachApi.cancelJob } catch { return undefined } })()
-  const stop = async () => {
-    try { await cancelFn(); refresh() } catch (e) { toast(JOB_ERRORS[e.data?.code] || e.message || t('Could not ask the Coach')) }
-  }
+  // Stopping a chat reply keeps what was written so far (the server stores it as partial).
+  const stop = () => chatCancel().catch(e => toast(chatErrorText(e)))
   const clearChat = () => confirmSheet({
     title: t('Clear the conversation?'),
     message: t('This removes the messages on this screen. What the Coach proposed stays under “Everything the Coach proposed”.'),
     confirmText: t('Clear'),
-    onConfirm: () => { update(s => { s.coach.chat = (s.coach.chat || []).filter(m => m.kind === 'intake') }); toast(t('Conversation cleared')) }
+    onConfirm: () => {
+      update(s => { s.coach.chat = (s.coach.chat || []).filter(m => m.kind === 'intake') })
+      if (chatOk) chatClear().catch(() => {})
+      toast(t('Conversation cleared'))
+    }
   })
   const askNewPlan = () => ask(() => requestPlan(coach.profile), t('Build me a fresh plan from my answers.'))
   const askImprove = r => ask(
@@ -179,7 +221,7 @@ export default function CoachChat() {
   const showHistory = () => openSheet(close => <HistorySheet S={S} close={close} openSheet={openSheet} />)
   const showCohort = () => openSheet(() => <CohortSheet S={S} update={update} toast={toast} />)
 
-  const idle = !job && !pending
+  const idle = !job && !pending && live === null
   const menu = () => openSheet(close => <div className="chat-menu">
     <h3>{t('Coach')}</h3>
     <div className="sect-b">
@@ -247,7 +289,14 @@ export default function CoachChat() {
         {PROMPTS.map(p => <button key={p.k} className="qchip" onClick={p.run}><Icon name={p.icon} />{p.label}</button>)}
       </div>}
 
-      {job && <Typing S={S} kind={job.kind} coachLocal={coachLocal} config={config} onStop={cancelFn ? stop : null} />}
+      {job && <Typing S={S} kind={job.kind} coachLocal={coachLocal} config={config} />}
+
+      {live !== null && <div className="msg coach">
+        {live
+          ? <div className="bub"><CoachText text={live} /></div>
+          : <div className="bub typing" role="status" aria-label={t('Coach is thinking…')}><i /><i /><i /></div>}
+        <button className="retry" onClick={stop}>{t('Stop')}</button>
+      </div>}
 
       {pending && !job && (pending.kind === 'create'
         ? <PlanCard p={pending} S={S} update={update} toast={toast} nav={nav} refresh={refresh} />
@@ -268,10 +317,10 @@ export default function CoachChat() {
         {community && <button className="qchip" onClick={showCohort}><Icon name="person" />{t('Compare')}</button>}
       </div>}
       <div className="composer-in">
-        <textarea rows={1} value={text} maxLength={maxMessageLen || 1000} placeholder={placeholder} disabled={!!job}
+        <textarea rows={1} value={text} maxLength={maxMessageLen || 1000} placeholder={placeholder} disabled={!!job || live !== null}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
-        <button className="send" onClick={send} disabled={!text.trim() || busy || !!job} aria-label={t('Send')}><Icon name="arrowUp" /></button>
+        <button className="send" onClick={send} disabled={!text.trim() || busy || !!job || live !== null} aria-label={t('Send')}><Icon name="arrowUp" /></button>
       </div>
     </div>
   </div>

@@ -10,7 +10,7 @@ import { todayISO } from '../lib/format.js'
 // The chat is where a plan is imported. These pin that the Import button applies the pending
 // plan through the store, writes the decision into the thread, and leaves today startable.
 const mocks = vi.hoisted(() => {
-  const state = { S: null, pending: null, job: null, community: false, maxMessageLen: 2200, nav: vi.fn(), toast: vi.fn(), openSheet: vi.fn(), refresh: vi.fn() }
+  const state = { S: null, pending: null, job: null, community: false, chatOk: false, maxMessageLen: 2200, nav: vi.fn(), toast: vi.fn(), openSheet: vi.fn(), refresh: vi.fn() }
   state.storeSnapshot = () => ({
     S: state.S,
     user: { id: 'u1' },
@@ -45,6 +45,12 @@ vi.mock('../lib/coach-api.js', () => ({
   JOB_ERRORS: { internal: 'x' },
   awaitedJob: () => null,
   settleAwaited: vi.fn(),
+  chatHistory: vi.fn(() => Promise.resolve({ supported: mocks.chatOk, busy: false, messages: [] })),
+  chatSend: vi.fn(() => Promise.resolve({ message: { text: 'ok' } })),
+  chatCancel: vi.fn(() => Promise.resolve({ ok: true })),
+  chatClear: vi.fn(() => Promise.resolve({ ok: true })),
+  chatWaitForReply: vi.fn(() => Promise.resolve({ busy: false, messages: [] })),
+  chatErrorText: e => e.message,
 }))
 vi.mock('../sheets.jsx', () => ({ startFlow: vi.fn(), confirmSheet: vi.fn() }))
 vi.mock('../lib/api.js', () => ({
@@ -89,8 +95,9 @@ function installDom() {
   root = createRoot(container)
 }
 
-async function mount(pending, job = null, { community = false, S = state() } = {}) {
+async function mount(pending, job = null, { community = false, S = state(), chatOk = false } = {}) {
   mocks.S = S
+  mocks.chatOk = chatOk
   mocks.pending = pending
   mocks.job = job
   mocks.community = community
@@ -267,8 +274,19 @@ describe('the Coach chat', () => {
     expect(api.requestReview).toHaveBeenCalledWith('trim my volume')
   })
 
-  it('shows no Stop button while the coach-api has no cancel call', async () => {
-    await mount(null, { id: 'j1', kind: 'review', state: 'running', startedAt: Date.now() })
+  it('with chat available, streams the answer to a question, offers Stop, and keeps the reply', async () => {
+    const api = await import('../lib/coach-api.js')
+    let finish
+    api.chatSend.mockImplementationOnce((msg, { onDelta }) => { onDelta('Because **fatigue**'); return new Promise(r => { finish = r }) })
+    await mount(null, null, { chatOk: true })
+    await click([...container.querySelectorAll('.chat-start .qchip')].find(b => /bench stall/.test(b.textContent)))
+    expect(api.chatSend).toHaveBeenCalledWith('Why did my bench stall?', expect.anything())
+    expect(api.requestReview).not.toHaveBeenCalledWith('Why did my bench stall?')
+    expect(container.querySelector('.msgs').textContent).toContain('Because fatigue')
+    await click(byText(/^Stop$/))
+    expect(api.chatCancel).toHaveBeenCalled()
+    await act(async () => { finish({ message: { text: 'Because fatigue.' } }) })
+    expect(mocks.S.coach.chat.slice(-2).map(m => [m.role, m.text])).toEqual([['user', 'Why did my bench stall?'], ['coach', 'Because fatigue.']])
     expect(byText(/^Stop$/)).toBeFalsy()
   })
 })
