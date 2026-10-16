@@ -788,7 +788,7 @@ export default function Settings({ page = null, find = null, via = null }) {
       <Section title={t('Bring data in')}>
         <Row icon="download" iconTint="var(--teal)" title={t('Import backup')} accessory="chevron" onClick={() => fileRef.current.click()} />
         <Row icon="download" iconTint="var(--teal)" title={t('Import from another app')}
-          subtitle={t('FitNotes, Strong, Hevy, or body weight from Apple Health')}
+          subtitle={t('FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect')}
           accessory="chevron" onClick={() => importRef.current.click()} />
         <Row icon="key" iconTint="var(--teal)" title={t('Import from Hevy')}
           subtitle={t('Pull your history with a Hevy Pro API key')}

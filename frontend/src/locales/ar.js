@@ -515,7 +515,7 @@ export default {
   'Calves': 'السمانة',
   'Shins': 'عضلات الساق الأمامية',
   'Import from another app': 'استيراد من تطبيق آخر',
-  'FitNotes, Strong, Hevy, or body weight from Apple Health': 'FitNotes أو Strong أو Hevy، أو وزن الجسم من Apple Health',
+  'FitNotes, Strong, Hevy, or body weight from Apple Health / Garmin Connect': 'FitNotes أو Strong أو Hevy، أو وزن الجسم من Apple Health / Garmin Connect',
   'Import from {0}': 'استيراد من {0}',
   'Import history': 'استيراد السجل',
   'Weigh-ins': 'قياسات الوزن',

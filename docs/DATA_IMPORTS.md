@@ -55,6 +55,18 @@ in, and keeps one weigh-in per day. Days that already have a weigh-in are left a
 
 A CSV with a date column and a weight column works the same way.
 
+## Body weight from Garmin Connect
+
+On [connect.garmin.com](https://connect.garmin.com), open **Health Stats → Weight**, choose the
+range you want and use the page's **Export** (CSV) option. Pick that file under **Import from
+another app**. Each weigh-in keeps the time of day Garmin recorded (the Stats weight graph uses it
+to tell morning from evening weigh-ins), and the unit written in each row (kg or lbs) is converted
+to yours. One weigh-in per day is kept, and days that already have one are left alone.
+
+There is no live "connect your Garmin account" sync. Garmin has no public consumer API, and its
+login (Cloudflare-protected, rate-limited, with MFA) cannot be done reliably from a self-hosted
+server without extra dependencies, so openGym never asks for your Garmin password.
+
 ## Sharing a plan
 
 On the **Plan** screen, tap the share icon:
