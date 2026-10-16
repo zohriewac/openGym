@@ -102,10 +102,23 @@ describe('live PR', () => {
 })
 
 describe('previous-set hint', () => {
-  it('shows last time\'s set on an undone row and hides it once the row is done', async () => {
+  it('shows last time\'s set in its own column on undone and done rows alike', async () => {
     await mount([{ w: 60, r: 5, done: false }, { w: 60, r: 5, done: true }])
     const rows = [...container.querySelectorAll('.setrow')]
     expect(rows[0].querySelector('.set-prev')?.textContent).toContain('80')
-    expect(rows[1].querySelector('.set-prev')).toBeNull()
+    expect(rows[1].querySelector('.set-prev')?.textContent).toContain('80')
+    expect(container.querySelector('.sethead .prev-sp')).toBeTruthy()
+  })
+})
+
+describe('check pop', () => {
+  it('plays only at the tap: a done set mounts without just-done, a ticked one has it, then loses it', async () => {
+    await mount([{ w: 60, r: 5, done: true }, { w: 60, r: 5, done: false }])
+    expect(checks()[0].className).not.toContain('just-done')
+    await tick(1)
+    expect(checks()[1].className).toContain('just-done')
+    expect(checks()[0].className).not.toContain('just-done')
+    await act(async () => { await new Promise(r => setTimeout(r, 350)) })
+    expect(checks()[1].className).not.toContain('just-done')
   })
 })

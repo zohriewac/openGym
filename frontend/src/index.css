@@ -853,6 +853,8 @@ body.chips-dragging *{cursor:inherit}
    without painting it; the left side stays shorter so the stepper's + button keeps its edge */
 .chk::before,.ck::before{content:'';position:absolute;inset:-7px -7px -7px -4px}
 .chk.on{background:var(--acc);box-shadow:none;color:var(--on-acc)}
+/* the spring pop belongs to the tap (Workout.jsx adds .just-done for a moment), not to a done set mounting */
+.chk.just-done{animation:chk-pop .22s var(--spring)}
 .chk:active,.ck:active{transform:scale(.9)}
 .ck svg{
   width:16px;height:16px;stroke:transparent;fill:none;stroke-width:2.6;
@@ -1042,6 +1044,8 @@ body.chips-dragging *{cursor:inherit}
   font-size:var(--fs-xs);color:var(--label-3);font-weight:500;text-transform:uppercase;letter-spacing:.045em;
 }
 .sethead .n-sp{width:24px;flex:none}
+/* Previous column: one fixed width in the header and every plain row so weight and reps stay on their tracks */
+.sethead .prev-sp,.setrow .set-prev{width:44px;flex:none;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sethead .w-sp{flex:1.4;text-align:center}
 .sethead .r-sp{flex:1;text-align:center}
 .sethead .eff-sp{text-align:center}
@@ -1162,7 +1166,14 @@ body.chips-dragging *{cursor:inherit}
 .effpick .effpick-free .stp .num{font-size:var(--fs-lg);font-weight:600}
 .effpick .effpick-free .stp .num::placeholder{color:var(--label-3);font-weight:500}
 .setrow.done .n{background:var(--acc);color:var(--on-acc)}
-.setrow.done{opacity:.45}
+/* done: an accent wash with quieter numbers; the first undone row gets a ring on its number */
+.setrow.done{background:var(--acc-soft);border-radius:var(--r-sm)}
+.setrow:not(.side).done,.setrow:not(.side).current:not(.done){margin-inline:-6px;padding-inline:6px}
+.setrow.done .stp .num,.setrow.done .stp .val,.setrow.done .set-prev{color:var(--label-2)}
+.setrow.current:not(.done) .n,.setrow-side.current .n{box-shadow:0 0 0 2px var(--acc)}
+.setrow.current:not(.done){background:var(--surface-2);border-radius:var(--r-sm)}
+/* the packed effort and timed rows keep the hint at the end of the line, natural width */
+.setrow.eff3 .set-prev,.setrow.timed .set-prev{order:8;width:auto}
 
 /* Swipe on sets (v1.3.11, components/SwipeRow.jsx). The row slides over two panes: Copy at the
    start of the line, Delete at its end, each as wide as the swipe has gone and zero wide at rest.
@@ -1238,6 +1249,7 @@ body.chips-dragging *{cursor:inherit}
 .sethead.per-side.eff3 .r-sp{flex:1.4}
 .sethead.per-side.eff3 .eff-sp{flex:.6 1 0}
 @media (max-width:400px){
+  .sethead .prev-sp,.setrow .set-prev{width:36px}
   /* the same squeeze on a plain row, where the list view's own inset costs the last pixels */
   .setrow.eff3 .stp.w button,.setrow.eff3 .stp.r button{width:21px}
   .setrow.eff3 .stp.r,.sethead.eff3 .r-sp{flex:1.25}
@@ -1315,7 +1327,6 @@ body.chips-dragging *{cursor:inherit}
   .setrow.timed .stp.w:not(.plain),.setrow.timed .stp.r:not(.plain),.sethead.timed:not(.plain) .w-sp,.sethead.timed:not(.plain) .r-sp{--btn-floor:16px}
 }
 .setrow.side.done .sidetag{background:var(--acc);color:var(--on-acc)}
-.setrow.side.done{opacity:.45}
 
 /* drop-set drops / rest-pause bursts riding on a work row, editable like the row itself
    (issue: drop-sets & rest-pause) */
@@ -2166,7 +2177,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .list .similar-label{margin:16px 2px 6px;grid-column:1/-1}
 
 /* ------------------------------------------------------------- motion --- */
-.chk.on,.ck.on{animation:chk-pop .22s var(--spring)}
+.ck.on{animation:chk-pop .22s var(--spring)}
 @keyframes chk-pop{from{transform:scale(.8)}to{transform:none}}
 .pr-burst{position:relative}
 .pr-burst::after{
