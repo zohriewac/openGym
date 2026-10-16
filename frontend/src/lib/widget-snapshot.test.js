@@ -38,3 +38,16 @@ describe('widgetSnapshot', () => {
     expect(widgetSnapshot(S, TODAY, NOW).progress).toBeNull()
   })
 })
+
+describe('widgetSnapshot JSON shape (decoded by Snapshot in OpenGymWidget.swift)', () => {
+  it('has exactly the keys and types the widget decodes', () => {
+    const S = { workouts: [], routines: [{ id: 'a', name: 'A', ex: [{ id: 'x' }] }], week: { 4: ['a'] }, dayPlan: {}, bodyweight: [], unit: 'kg', weekStart: 1 }
+    const j = JSON.parse(JSON.stringify(widgetSnapshot(S, '2026-10-15', Date.parse('2026-10-15'))))
+    expect(Object.keys(j).sort()).toEqual(['next', 'progress', 'v', 'week'])
+    expect(Object.keys(j.week).sort()).toEqual(['done', 'planned', 'start'])
+    expect(typeof j.week.done).toBe('number')
+    expect(j.week.start).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(j.next === null || (typeof j.next.name === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(j.next.on))).toBe(true)
+    expect(j.progress === null || (Number.isFinite(j.progress.pct) && j.progress.points.every(Number.isFinite))).toBe(true)
+  })
+})

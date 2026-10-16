@@ -27,6 +27,8 @@ function progressOf(S, now, ws) {
     for (const k in last) (weeks[k] ||= []).push(last[k])
   }
   const points = Object.keys(weeks).sort().slice(-8).map(k => r1(mean(weeks[k])))
+  // JSON.stringify turns NaN/Infinity into null, which the Swift decoder rejects (whole widget goes empty)
+  if (!Number.isFinite(pct) || !points.every(Number.isFinite)) return null
   return { pct: r1(pct), points }
 }
 

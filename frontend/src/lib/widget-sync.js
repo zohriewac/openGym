@@ -26,5 +26,7 @@ export function initWidgetSync(getS) {
   if (!isWidgetHost() || typeof document === 'undefined') return
   const push = () => pushWidget(getS())
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') push() })
+  document.addEventListener('pagehide', push)
   setTimeout(push, 3000)
+  setInterval(push, 30000) // backgrounding may never reach JS; the dedupe makes idle ticks free
 }
