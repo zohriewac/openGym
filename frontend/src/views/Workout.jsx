@@ -121,6 +121,22 @@ function ExerciseBlock({ entryIdx, compact, dense, editing, onToggle, onToggleSi
   const setFlash = useUI(s => (s.setFlash?.idx === entryIdx ? s.setFlash : null))
   const optsId = useId()
   const entry = S.active.entries[entryIdx]
+  // Which ticks just flipped to done, so the check's spring pop plays at the tap and not again
+  // each time a done set mounts. Three slots per set: the row, then its L and R sides.
+  const doneKey = entry.sets.map(x => [x.done, x.sides?.L?.done, x.sides?.R?.done].map(v => (v ? 1 : 0)).join('')).join('')
+  const prevDone = useRef(null)
+  const [popped, setPopped] = useState(() => new Set())
+  useEffect(() => {
+    const was = prevDone.current
+    prevDone.current = doneKey
+    if (!was || was.length !== doneKey.length) return
+    const now = new Set([...doneKey].flatMap((c, k) => (c === '1' && was[k] === '0' ? [k] : [])))
+    if (!now.size) return
+    setPopped(now)
+    const id = setTimeout(() => setPopped(new Set()), 300)
+    return () => clearTimeout(id)
+  }, [doneKey])
+  const popCls = k => (popped.has(k) ? ' just-done' : '')
   // Drops/bursts mutate the row in place — same card, not a new set with its own long rest.
   // A planned exercise (see the exercise's "Intensifier" config) arrives with these already
   // filled in by applyIntensifierPlan; these only add/edit/remove entries live from here on.
@@ -553,10 +569,11 @@ function ExerciseBlock({ entryIdx, compact, dense, editing, onToggle, onToggleSi
     const sd = (s.sides && s.sides[side]) || { w: 0, r: 0, done: false }
     return <div className={'setrow side' + (sd.done ? ' done' : '') + (col3 ? ' eff3' : '')}>
       <span className="sidetag" aria-hidden="true">{side === 'L' ? t('L') : t('R')}</span>
+      {!col3 && <span className="set-prev">{hint(s, i, side)}</span>}
       {sideCell(sd, i, side, col1, 'w')}
       {col2 && sideCell(sd, i, side, col2, 'r')}
       {col3 && sideEffortCell(sd, i, side, col3)}
-      <Check checked={sd.done} label={t('Set {0} ({1}) done', setNumOf(s, i), side === 'L' ? t('Left') : t('Right'))} onChange={() => onToggleSide(i, side)} />
+      <Check checked={sd.done} className={(sd.done && prSets.has(prKey(S.active, entry.id) + ':' + i) ? 'pr-burst' : '') + popCls(i * 3 + (side === 'L' ? 1 : 2))} label={t('Set {0} ({1}) done', setNumOf(s, i), side === 'L' ? t('Left') : t('Right'))} onChange={() => onToggleSide(i, side)} />
     </div>
   }
   // A side's own drop-set/rest-pause sub-rows (issue #60): the intensifier is logged per limb, so
@@ -599,15 +616,30 @@ function ExerciseBlock({ entryIdx, compact, dense, editing, onToggle, onToggleSi
   const failMark = s => isFailureSet(s) ? <span className="failmark" aria-hidden="true">{t('F')}</span> : null
   const failSay = (s, label) => isFailureSet(s) ? label + ', ' + t('Taken to failure') : label
   // What this row did last time, from the same work-set position (warm-up rows don't count).
-  const hint = (s, i) => s.done || isWarmupRow(s) ? null
-    : prevSetAt(last, i - entry.sets.slice(0, i).filter(isWarmupRow).length, entry.id, speedUnitOf(S))
+  // A per-side row reads the same side of last time's set when that set was logged per side.
+  const hint = (s, i, side) => {
+    if (isWarmupRow(s)) return null
+    const j = i - entry.sets.slice(0, i).filter(isWarmupRow).length
+    const sd = side && last?.sets?.[j]?.sides?.[side]
+    if (sd) return setLabel(entry.id, { ...last.sets[j], ...sd }, last.target, speedUnitOf(S))
+    return prevSetAt(last, j, entry.id, speedUnitOf(S))
+  }
+  const curIdx = entry.sets.findIndex(x => !x.done)
+  const curCls = i => (i === curIdx ? ' current' : '')
+  // Previous sits in its own column on plain rows; the packed effort and timed rows have no
+  // room for one, so they keep the old trailing hint on undone rows only.
+  const prevCell = (s, i) => {
+    const h = hint(s, i)
+    return (col3 || timed) && s.done ? null : <span className="set-prev">{h}</span>
+  }
   const plainRow = (s, i) => (
-    <div ref={el => onSetRowRef?.(i, el)} className={'setrow' + (s.done ? ' done' : '') + (col3 ? ' eff3' : '') + (timed ? ' timed' : '')}>
+    <div ref={el => onSetRowRef?.(i, el)} className={'setrow' + (s.done ? ' done' : '') + curCls(i) + (col3 ? ' eff3' : '') + (timed ? ' timed' : '')}>
       <button type="button" className="n" aria-label={failSay(s, sideTagOf(s) ? t('Set {0} ({1})', setNumOf(s, i), sideTagOf(s)) : t('Set {0}', setNumOf(s, i)))} aria-describedby={optsId} title={t('More')} onClick={() => openSetMenu(s, i)}>{setNumOf(s, i)}{failMark(s)}</button>
       {/* Both words sit in the pill's one grid cell (::before/::after, hidden), so Left and
           Right are as wide as the longer of the two in every language and the inputs
           after them line up (#322). */}
       {sideTagOf(s) && <span className="tag acc nocap sidepill" data-l={t('Left')} data-r={t('Right')}><span>{sideTagOf(s)}</span></span>}
+      {prevCell(s, i)}
       {cell(s, i, col1, 'w')}
       {col2 && cell(s, i, col2, 'r')}
       {col3 && (col3.eff ? effortCell(s, i, col3) : cell(s, i, col3, 'r inc'))}
@@ -615,8 +647,7 @@ function ExerciseBlock({ entryIdx, compact, dense, editing, onToggle, onToggleSi
           set off itself. The checkbox stays for anyone who timed it on their own watch. */}
       {timed && !editing && <button className="setgo" aria-label={t('Start set')} disabled={s.done || !!working}
         onClick={() => onStartTimed(i)}><Icon name="play" /></button>}
-      {hint(s, i) && <span className="set-prev">{hint(s, i)}</span>}
-      <Check checked={s.done} className={s.done && prSets.has(prKey(S.active, entry.id) + ':' + i) ? 'pr-burst' : ''} label={sideTagOf(s) ? t('Set {0} ({1}) done', setNumOf(s, i), sideTagOf(s)) : t('Set {0} done', setNumOf(s, i))} onChange={() => onToggle(i)} />
+      <Check checked={s.done} className={(s.done && prSets.has(prKey(S.active, entry.id) + ':' + i) ? 'pr-burst' : '') + popCls(i * 3)} label={sideTagOf(s) ? t('Set {0} ({1}) done', setNumOf(s, i), sideTagOf(s)) : t('Set {0} done', setNumOf(s, i))} onChange={() => onToggle(i)} />
     </div>
   )
   // Swipe on sets (v1.3.11, Settings → Workout): a set row swiped toward the start of the line is
@@ -703,7 +734,7 @@ function ExerciseBlock({ entryIdx, compact, dense, editing, onToggle, onToggleSi
     <div className="card" style={{ marginTop: 10, marginBottom: 0 }}>
       {/* the header carries the same eff3/timed sizing as the rows, or the labels drift off their
           columns; over L/R rows it also has to skip the side badge that sits in front of the weight cell */}
-      <div className={'sethead' + (col3 ? ' eff3' : '') + (timed ? ' timed' : '') + (perSide ? ' per-side' : '') + (wc.steppers ? '' : ' plain')}><span className="n-sp" /><span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className={col3.eff ? 'eff-sp' : 'r-sp'}>{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>
+      <div className={'sethead' + (col3 ? ' eff3' : '') + (timed ? ' timed' : '') + (perSide ? ' per-side' : '') + (wc.steppers ? '' : ' plain')}><span className="n-sp" />{!col3 && !timed && <span className="prev-sp">{t('Prev')}</span>}<span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className={col3.eff ? 'eff-sp' : 'r-sp'}>{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>
       <span id={optsId} className="vh">{t('Options: copy, remove')}</span>
       {entry.sets.map((s, i) => {
         const warm = isWarmupRow(s)
@@ -730,7 +761,7 @@ function ExerciseBlock({ entryIdx, compact, dense, editing, onToggle, onToggleSi
             // Unilateral set: the number sits beside a two-row L/R stack, each side logged and
             // ticked on its own (issue #60). Warm-ups split the same way as the work sets they
             // ramp toward, so a warm-up side set shows L/R too (#388).
-            <div ref={el => onSetRowRef?.(i, el)} className={'setrow-side' + (s.done ? ' done' : '')}>
+            <div ref={el => onSetRowRef?.(i, el)} className={'setrow-side' + (s.done ? ' done' : '') + curCls(i)}>
               <button type="button" className="n" aria-label={failSay(s, t('Set {0}', phaseNum))} aria-describedby={optsId} title={t('More')} onClick={() => openSetMenu(s, i)}>{phaseNum}{failMark(s)}</button>
               <div className="side-rows">
                 {sideRow(s, i, 'L', col1, col2, col3)}
