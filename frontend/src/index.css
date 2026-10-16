@@ -1434,7 +1434,11 @@ body.chips-dragging *{cursor:inherit}
 }
 @keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 #timer .bar{position:absolute;top:0;inset-inline-start:0;inset-inline-end:0;height:3px;background:var(--surface-3)}
-#timer .bar i{display:block;height:100%;background:var(--acc);transition:width 1s linear}
+#timer .bar i{display:block;height:100%;background:var(--acc);transform-origin:left;transition:transform 1s linear}
+[dir="rtl"] #timer .bar i{transform-origin:right}
+/* last 5 seconds: the clock breathes in the accent */
+#timer.low .t{color:var(--acc);animation:tlow 1s ease-in-out infinite}
+@keyframes tlow{50%{opacity:.55;transform:scale(1.04)}}
 /* The clock is what the bar is for, so it never gives up width: the buttons do (Skip is the one that
    gives: in a long language on a narrow phone it becomes an icon, RestTimer.jsx useSkipFits). The label under the
    clock fills the clock's width but does not widen it. */
@@ -1451,7 +1455,9 @@ body.chips-dragging *{cursor:inherit}
 }
 #timer .lbl .icn{font-size:10px;flex:none;opacity:.8}
 #timer .acts{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:1 1 auto;min-width:0}
-#timer .acts .btn{padding-top:11px;padding-bottom:11px}   /* sweaty hands, mid-set */
+#timer .acts .btn{padding-top:11px;padding-bottom:11px;min-height:44px;min-width:44px}   /* sweaty hands, mid-set */
+#timer .acts .adj{border-radius:99px}
+#timer .t{transform-origin:left center}
 #timer .acts .adj{padding-inline:9px;gap:2px}
 #timer .acts .btn.plain{background:var(--surface-2);color:var(--label)}
 #timer .acts .btn.plain:active{background:var(--surface-3)}
@@ -1505,7 +1511,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 #modal-root{position:fixed;inset:0;z-index:100;display:none}
 #modal-root.open{display:block}
 .mback{
-  position:absolute;inset:0;background:rgba(0,0,0,.4);
+  position:absolute;inset:0;background:rgba(0,0,0,.4);animation:mfade .25s var(--ease);
   -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
   touch-action:none;overscroll-behavior:none;
 }
@@ -1536,8 +1542,9 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 }
 :root[data-theme="light"] .sheet{background:var(--bg)}
 @keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
-.sheet .grab{width:36px;height:5px;border-radius:99px;background:var(--label-4);margin:6px auto 14px}
-.sheet h3{font-size:var(--fs-xl);font-weight:600;letter-spacing:-.021em;margin-bottom:14px}
+@keyframes mfade{from{opacity:0}to{opacity:1}}
+.sheet .grab{width:40px;height:5px;border-radius:99px;background:var(--label-3);margin:var(--sp-2) auto var(--sp-3)}
+.sheet h3{font-size:var(--fs-xl);font-weight:600;letter-spacing:-.021em;margin-bottom:var(--sp-3)}
 .picker-search{
   position:sticky;top:0;z-index:2;margin-bottom:0;padding-bottom:10px;
   background:var(--bg-el);
@@ -1755,7 +1762,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 /* With an action (Undo): the message, then the button at the end, and the toast takes taps. */
 #toast.has-action{pointer-events:auto;display:flex;align-items:center;gap:6px;padding:var(--sp-1) 6px var(--sp-1) 18px;text-align:start}
 #toast.has-action .toast-msg{flex:1;min-width:0;padding:7px 0}
-#toast .toast-act{flex:none;display:inline-flex;align-items:center;gap:5px;color:var(--acc);font-weight:700;padding:var(--sp-2) var(--sp-3);border-radius:14px;min-height:36px}
+#toast .toast-act{flex:none;display:inline-flex;align-items:center;gap:5px;color:var(--acc);background:var(--acc-soft);font-weight:700;padding:var(--sp-2) var(--sp-3);border-radius:99px;min-height:44px}
 #toast .toast-act:active{background:color-mix(in srgb,var(--label) 10%,transparent)}
 #toast .toast-act .icn{font-size:16px}
 body.no-tabbar #toast{bottom:calc(24px + var(--sab))}
