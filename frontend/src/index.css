@@ -1839,9 +1839,10 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
 .wd-ss .ss-label{margin:0 0 8px}
 .wd-ss .wd-ex:last-child{margin-bottom:0}
 .ss-card{
-  border-radius:var(--r-lg);padding:14px;
-  background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--acc-line);
+  border-radius:var(--r-lg);padding:var(--sp-3) var(--sp-4);
+  background:var(--surface);box-shadow:inset 3px 0 0 var(--acc);   /* the left accent rule groups the pair */
 }
+[dir="rtl"] .ss-card{box-shadow:inset -3px 0 0 var(--acc)}
 .workout-swipe-surface{touch-action:pan-y}
 .workout-swipe-stack{position:relative;isolation:isolate;overflow:hidden}
 .workout-swipe-stack>.workout-swipe-card,.workout-swipe-stack>.workout-swipe-preview{min-width:0}
@@ -1871,19 +1872,19 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
   .wl-unit .ss-card{padding-inline:0}
 }
 .ss-hd{
-  font-size:12px;font-weight:600;color:var(--acc);margin-bottom:12px;
-  text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:var(--fs-sm);font-weight:600;color:var(--acc);margin-bottom:var(--sp-3);
+  text-align:start;display:flex;align-items:center;justify-content:flex-start;gap:var(--sp-1);
 }
 .ss-ex{position:relative}
-.ss-amp{text-align:center;font-size:var(--fs-md);font-weight:600;color:var(--acc);margin:14px 0 8px}
+.ss-amp{text-align:center;font-size:var(--fs-md);font-weight:600;color:var(--acc);margin:var(--sp-3) 0 var(--sp-2)}
 
 /* --- workout list view: every unit stacked, the current one outlined --- */
 /* minmax(0, …): a grid's default `auto` track is at least as wide as its widest content, so a set
    row whose cells have floors (see .setrow .stp) would widen the whole unit past the screen and
    push the ticks off it. Capped, a row that does not fit overflows its own card instead. */
-.workout-list{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.workout-list{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-4)}
 .wl-unit{
-  border-radius:var(--r-lg);padding:14px 14px var(--sp-1);
+  border-radius:var(--r-lg);padding:var(--sp-3) var(--sp-3) var(--sp-1);
   background:var(--surface-2);
 }
 /* scrolled to when the list opens (#224): clear the sticky header above it. Workout.jsx
@@ -1891,7 +1892,7 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
    the session name wraps; the fallback is the height of a one-line header. */
 .wl-unit{scroll-margin-top:calc(var(--whdr-h, var(--sat) + var(--conn) + 80px) + 16px)}
 .wl-unit.cur{box-shadow:inset 0 0 0 1.5px var(--acc-line)}
-.wl-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:10px}
+.wl-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-3)}
 .wl-summary{display:grid;gap:var(--sp-2);padding-bottom:10px}
 /* the folded unit is a button (a tap opens it again): full width, text where it always sat */
 button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var(--r-sm)}
@@ -1914,6 +1915,23 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .wchip.done{background:color-mix(in srgb,var(--green) 70%,var(--surface));box-shadow:none;color:var(--label)}
 .wchip.cur{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--acc);color:var(--label)}
 .wchip.partial.cur{box-shadow:inset 0 0 0 1.5px var(--orange),0 0 0 2px var(--bg),0 0 0 3.5px var(--acc)}
+/* the strip snaps chip to chip; the current exercise is the accent one, a done one carries a check */
+.chips.wchips{scroll-snap-type:x proximity;scroll-padding-inline:var(--sp-4)}
+.wchip{scroll-snap-align:center}
+.wchip.cur,.wchip.cur.done,.wchip.cur.partial{background:var(--acc);color:#fff;box-shadow:none}
+/* workout header: name small and muted, the clock large; progress is a full track with a scaled fill
+   (transform only, origin at the inline start so RTL fills from the right) */
+.whdr-name{font-size:var(--fs-sm);font-weight:600;color:var(--label-2)}
+.whdr-mid .sub{color:var(--label-2)}
+.whdr-clock{font-size:var(--fs-2xl);font-weight:700;line-height:1.1;color:var(--label);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.wprog{height:var(--sp-1);width:100%}
+.wprog i{width:100%;transform-origin:0 50%;transition:transform var(--med) var(--ease)}
+[dir="rtl"] .wprog i{transform-origin:100% 50%}
+/* start chooser: today's routine is the hero, freestyle the quiet second choice */
+.sc-hero{border-color:var(--acc);padding:var(--sp-5)}
+.sc-hero-body{margin-bottom:var(--sp-4)}
+.sc-hero-i{width:44px;height:44px;border-radius:var(--r);font-size:24px}
+.sc-secondary{display:grid;gap:var(--sp-3);margin-top:var(--sp-5)}
 /* part of the give-back above — one edge for all three insets of a row in the list view */
 @media (max-width:404px){
   .wl-unit{padding:10px var(--sp-2) 2px}
