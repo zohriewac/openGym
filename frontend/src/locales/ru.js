@@ -162,6 +162,7 @@ export default {
   'Volume': 'Объём',
   'PRs': 'Рекорды',
   'New PR:': 'Новый рекорд:',
+  'New PR: {0} {1}': 'Новый рекорд: {0} {1}',
   'Nice!': 'Отлично!',
   'Nothing logged yet': 'Пока ничего не записано',
   'You haven’t checked off any sets. Finish the workout anyway?': 'Ни один подход не отмечен. Всё равно завершить тренировку?',

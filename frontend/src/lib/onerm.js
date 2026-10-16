@@ -195,6 +195,13 @@ export function is1RMRecord(S, exId, entry, formula = formulaOf(S)) {
   return !prev || now.est > prev.est ? { ...now, prev: prev ? prev.est : 0 } : null
 }
 
+// A record worth celebrating while it is logged: there has to be an earlier best to beat, so a
+// first-ever log is not a PR (same rule as the dashboard).
+export function livePR(S, exId, entry) {
+  const rec = is1RMRecord(S, exId, entry)
+  return rec && rec.prev > 0 ? rec : null
+}
+
 // Confidence index (0–1) of a 1RM estimate. Accounts for rep-count decay, RIR
 // subjectivity, and (for the weighted ensemble) inter-formula disagreement.
 export function calculate1RMAccuracy(reps, rir = null, formula = 'weighted') {

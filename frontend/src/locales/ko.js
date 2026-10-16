@@ -166,6 +166,7 @@ export default {
   'Volume': '볼륨',
   'PRs': '신기록',
   'New PR:': '신기록:',
+  'New PR: {0} {1}': '신기록: {0} {1}',
   'Nice!': '좋아요!',
   'Nothing logged yet': '아직 기록 없음',
   'You haven’t checked off any sets. Finish the workout anyway?': '체크한 세트가 없어요. 그래도 운동을 마칠까요?',

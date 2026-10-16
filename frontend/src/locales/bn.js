@@ -197,6 +197,7 @@ export default {
   'Volume': 'ভলিউম',
   'PRs': 'রেকর্ড',
   'New PR:': 'নতুন রেকর্ড:',
+  'New PR: {0} {1}': 'নতুন রেকর্ড: {0} {1}',
   'Nice!': 'দারুণ!',
   'Nothing logged yet': 'এখনও কিছু লগ করা হয়নি',
   'You haven’t checked off any sets. Finish the workout anyway?': 'আপনি কোনো সেট টিক দেননি। তবুও ওয়ার্কআউট শেষ করবেন?',

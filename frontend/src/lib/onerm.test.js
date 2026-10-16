@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { estimate1RM, bestSetOf, e1rmSeries, best1RM, is1RMRecord, REP_CAP, WEIGHTED_REP_CAP, FORMULAS, calculate1RMAccuracy, formulaOf } from './onerm.js'
+import { estimate1RM, bestSetOf, e1rmSeries, best1RM, is1RMRecord, livePR, REP_CAP, WEIGHTED_REP_CAP, FORMULAS, calculate1RMAccuracy, formulaOf } from './onerm.js'
 
 describe('estimate1RM', () => {
   it('returns the load unchanged for a single rep', () => {
@@ -363,5 +363,20 @@ describe('the formula a profile picked (Settings, Discord request)', () => {
     expect(best1RM(S, 'x').est).toBe(estimate1RM(100, 8, 'epley'))
     expect(best1RM({ ...S, oneRmFormula: 'brzycki' }, 'x').est).toBe(estimate1RM(100, 8, 'brzycki'))
     expect(best1RM({ ...S, oneRmFormula: 'brzycki' }, 'x').est).toBeLessThan(best1RM(S, 'x').est)
+  })
+})
+
+describe('livePR', () => {
+  it('is null for a first-ever log: nothing earlier to beat', () => {
+    expect(livePR(S, 'deadlift', { id: 'deadlift', sets: [{ w: 140, r: 3, done: true }] })).toBeNull()
+  })
+
+  it('is null when the estimate only ties or trails the earlier best', () => {
+    expect(livePR(S, 'bench', { id: 'bench', sets: [{ w: 90, r: 5, done: true }] })).toBeNull()
+    expect(livePR(S, 'bench', { id: 'bench', sets: [{ w: 80, r: 5, done: true }] })).toBeNull()
+  })
+
+  it('gives {est, prev} when the estimate beats the earlier best', () => {
+    expect(livePR(S, 'bench', { id: 'bench', sets: [{ w: 95, r: 5, done: true }] })).toMatchObject({ est: 110.8, prev: 105 })
   })
 })

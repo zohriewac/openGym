@@ -173,6 +173,7 @@ export default {
   'Volume': 'Volumen',
   'PRs': 'Rekorde',
   'New PR:': 'Neuer Rekord:',
+  'New PR: {0} {1}': 'Neuer Rekord: {0} {1}',
   'Nice!': 'Stark!',
   'Nothing logged yet': 'Noch nichts eingetragen',
   'You haven’t checked off any sets. Finish the workout anyway?': 'Du hast noch keine Sätze abgehakt. Training trotzdem beenden?',
