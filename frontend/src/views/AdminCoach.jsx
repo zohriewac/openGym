@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useUI } from '../store/useUI.js'
 import { useStore } from '../store/useStore.js'
 import { api } from '../lib/api.js'
+import { balanceText } from '../lib/coach.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Switch, TextArea, TextField } from '../components/ui.jsx'
 import { confirmSheet } from '../sheets.jsx'
@@ -64,6 +65,8 @@ export default function AdminCoach() {
   // The last "Test the Coach" outcome, shown inline where the button is rather than only as a
   // toast that is gone before anyone has read the provider's reason.
   const [testResult, setTestResult] = useState(null)
+  // Credit left on the provider account (OpenRouter), asked fresh on load and on demand.
+  const [balance, setBalance] = useState(null)
 
   // Every change on this card ends in load(), so load() also re-reads /api/config. The app reads
   // that once per boot, and the Plan tab's Coach card hangs off it: without the re-read, an admin
@@ -85,7 +88,11 @@ export default function AdminCoach() {
       if (r.ok) { setModels(r.models); toast(r.models.length + ' models') } else toast(r.error || 'Could not list models')
     } catch (e) { toast(e.message) }
     setBusy(false)
+    if (d?.providers.find(p => p.id === d.provider)?.balance) loadBalance()
   }
+  const loadBalance = () => api('/api/admin/coach/balance', { method: 'POST', body: '{}' }).then(setBalance).catch(e => setBalance({ ok: false, error: e.message }))
+  const balanceOn = !!(d && d.auth?.state === 'connected' && d.providers.find(p => p.id === d.provider)?.balance)
+  useEffect(() => { setBalance(null); if (balanceOn) loadBalance() }, [d?.provider, balanceOn])
   const test = async () => {
     setBusy(true); setTestResult({ pending: true })
     try {
@@ -287,6 +294,10 @@ export default function AdminCoach() {
           <Button size="sm" variant="tinted" icon="reset" disabled={busy} onClick={loadModels}>{models ? 'Refresh list' : 'List models'}</Button>
           {models && models.length ? <span className="dim small" style={{ alignSelf: 'center' }}>{models.length} served by the provider</span> : null}
         </div>}
+        {balanceOn && <div className="adm-actions">
+          <Button size="sm" variant="tinted" icon="reset" disabled={busy} onClick={loadBalance}>Refresh balance</Button>
+          <span className="dim small" style={{ alignSelf: 'center' }}>{balanceText(balance)}</span>
+        </div>}
       </Step>
 
       {/* ---------- test ---------- */}
@@ -314,11 +325,8 @@ export default function AdminCoach() {
         <summary>Advanced <Icon name="chevronRight" className="chev" /></summary>
         <div className="adm-fold-b">
           <div className="adm-group-t">Limits</div>
-          <div className="adm-hint">How many Coach runs are allowed per day. Every run is one request on the provider account above. 0 means no limit.</div>
-          <div className="adm-kv"><span className="k">Per user, per day</span>
-            <span className="v"><input className="num" type="number" min="0" max="200" defaultValue={d.caps.perProfileDaily} disabled={busy}
-              onBlur={capBlur('perProfileDaily')} /></span></div>
-          <div className="adm-kv"><span className="k">Whole instance, per day</span>
+          <div className="adm-hint">Optional cap on Coach runs per day across the whole instance. Every run is one request on the provider account above. 0 means no limit.</div>
+          <div className="adm-kv"><span className="k">Runs per day</span>
             <span className="v"><input className="num" type="number" min="0" max="5000" defaultValue={d.caps.instanceDaily} disabled={busy}
               onBlur={capBlur('instanceDaily')} /></span></div>
           <div className="adm-hint" style={{ marginTop: 10 }}>How long a chat message, refinement or review note can be. The chat composer and the server both enforce this.</div>

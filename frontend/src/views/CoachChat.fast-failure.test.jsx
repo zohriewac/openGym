@@ -42,7 +42,7 @@ vi.mock('../lib/api.js', () => ({
   api: vi.fn(async (path, opts) => {
     const srv = mocks.server
     if (path === '/api/coach/status') {
-      const snap = { job: null, pending: null, cap: { used: srv.used, limit: 10 }, last: srv.last, maxMessageLen: 1000 }
+      const snap = { job: null, pending: null, last: srv.last, maxMessageLen: 1000 }
       if (mocks.statusGate) { const gate = mocks.statusGate; mocks.statusGate = null; await gate }
       return snap
     }
@@ -103,7 +103,7 @@ afterEach(async () => {
 })
 
 describe('a Coach run that fails before the first poll', () => {
-  it('“Review my training” gets the error reply, once, and the counter reads what the server counted', async () => {
+  it('“Review my training” gets the error reply, once', async () => {
     mocks.S = state([routine])
     await mount()
     expect(replies()).toHaveLength(0)                         // opening the chat answers nothing old
@@ -111,14 +111,12 @@ describe('a Coach run that fails before the first poll', () => {
     await click(chip(/Review my training/))
     expect(mocks.S.coach.chat.at(-1)).toMatchObject({ role: 'coach', kind: 'error', text: FAILED })
     expect(mocks.S.coach.chat.at(-2)).toMatchObject({ role: 'user', kind: 'text' })
-    expect(container.querySelector('.composer-cap').textContent).toBe('5 of 10 Coach runs used today')
 
     await settle()
     expect(replies()).toHaveLength(1)                         // written once, not on every render
 
     await click(chip(/Review my training/))
     expect(replies()).toHaveLength(2)
-    expect(container.querySelector('.composer-cap').textContent).toBe('6 of 10 Coach runs used today')
   })
 
   it('a message asking for a plan gets the error reply', async () => {
@@ -143,7 +141,7 @@ describe('a Coach run that fails before the first poll', () => {
     expect(replies()[0]).toMatchObject({ kind: 'error', text: FAILED })
   })
 
-  it('a status answer taken before the start and landing after it does not put back the old count', async () => {
+  it('a status answer taken before the start and landing after it does not duplicate the reply', async () => {
     mocks.S = state([routine])
     // The chat's first poll is still on its way when the run is started: its snapshot is from
     // before the start, and it arrives after the refresh that follows the start.
@@ -151,9 +149,7 @@ describe('a Coach run that fails before the first poll', () => {
     mocks.statusGate = new Promise(r => { release = r })
     await mount()
     await click(chip(/Review my training/))
-    expect(container.querySelector('.composer-cap').textContent).toBe('5 of 10 Coach runs used today')
     await act(async () => { release(); await flush() })
-    expect(container.querySelector('.composer-cap').textContent).toBe('5 of 10 Coach runs used today')
     expect(replies()).toHaveLength(1)
     expect(replies()[0]).toMatchObject({ kind: 'error', text: FAILED })
   })

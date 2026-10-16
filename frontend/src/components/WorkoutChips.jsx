@@ -39,7 +39,7 @@ export default function WorkoutChips({ entries, cur, onPick }) {
       return <button key={c.key} type="button" className={'wchip ' + c.state + (c.current ? ' cur' : '')}
         data-unit-key={c.key} aria-current={c.current ? 'step' : undefined} aria-label={label} title={names}
         onClick={() => onPick(c)}>
-        <span>{c.n}</span>{c.unit.length > 1 && <Icon name="link" />}
+        {c.state === 'done' ? <Icon name="check" /> : <span>{c.n}</span>}{c.unit.length > 1 && <Icon name="link" />}
       </button>
     })}
   </nav>

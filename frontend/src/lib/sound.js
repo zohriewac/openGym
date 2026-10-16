@@ -174,6 +174,18 @@ export function vibrate(p) {
   try { navigator.vibrate && navigator.vibrate(p) } catch (e) { /* */ }
 }
 
+// A tick for the rep wheel: one per number passed, a firmer one when a value is picked. The iOS
+// app has no navigator.vibrate; its shell answers 'haptic' messages with the Taptic Engine
+// (OpenGym/.../HapticBridge.swift). Elsewhere a few milliseconds of vibration, where supported.
+export function tick(kind = 'tick') {
+  if (!buzz) return
+  try {
+    const h = typeof window !== 'undefined' && window.webkit?.messageHandlers?.haptic
+    if (h) { h.postMessage(kind); return }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(kind === 'commit' ? 14 : 8)
+  } catch (e) { /* */ }
+}
+
 // Settings → "Vibrate when the phone is on silent" (#375), Android app only. The page's buzz is an
 // ordinary one, and a phone on silent drops it; the end of a rest or a hold then goes through the
 // native side as an alarm (lib/rest-alert.js buzzAsAlarm), which silent mode lets through. App.jsx

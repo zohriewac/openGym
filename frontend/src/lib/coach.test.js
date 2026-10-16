@@ -696,3 +696,14 @@ describe('what the log keeps, so a decision never makes a proposal vanish', () =
     expect(lightBundle(null)).toBeNull()
   })
 })
+
+describe('balanceText', () => {
+  it('reads the account, a capped key, an uncapped key, a failure and a pending check', async () => {
+    const { balanceText } = await import('./coach.js')
+    expect(balanceText({ ok: true, scope: 'account', remaining: 74.75, used: 25.75 })).toBe('$74.75 left · $25.75 used')
+    expect(balanceText({ ok: true, scope: 'key', remaining: 6.8, used: 3.2 })).toBe('$6.80 left on this key · $3.20 used')
+    expect(balanceText({ ok: true, scope: 'key', remaining: null, used: 1 })).toBe('No limit on this key · $1.00 used')
+    expect(balanceText({ ok: false, error: '401 bad key' })).toBe('Balance unavailable: 401 bad key')
+    expect(balanceText(null)).toBe('Checking balance…')
+  })
+})

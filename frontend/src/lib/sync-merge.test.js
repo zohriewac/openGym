@@ -984,3 +984,20 @@ describe('body measurements across devices (#82)', () => {
     expect(next.measurements[0].t).toBe(1000)
   })
 })
+
+describe('Apple Health resting heart rate across devices', () => {
+  const base = { unit: 'kg', _ts: 100 }
+  it('keeps both devices\' days, and of one day the one saved later', () => {
+    const phone = { ...base, _ts: 300, restingHr: [{ d: '2026-10-01', t: 200, bpm: 55 }, { d: '2026-10-03', t: 300, bpm: 54 }] }
+    const desk = { ...base, _ts: 250, restingHr: [{ d: '2026-10-01', t: 250, bpm: 57 }, { d: '2026-10-02', t: 250, bpm: 56 }] }
+    const out = mergeStates(phone, desk)
+    expect(out.restingHr.map(e => e.d)).toEqual(['2026-10-01', '2026-10-02', '2026-10-03'])
+    expect(out.restingHr[0].bpm).toBe(57)
+  })
+  it('a day deleted on one device stays deleted', () => {
+    const prev = { ...base, restingHr: [{ d: '2026-10-01', t: 200, bpm: 55 }] }
+    const next = stampDeletions(prev, { ...base, restingHr: [] }, 500)
+    expect(next.deleted.restingHr['2026-10-01']).toBe(500)
+    expect(mergeStates({ ...next, _ts: 500 }, { ...prev, _ts: 300 }).restingHr || []).toEqual([])
+  })
+})

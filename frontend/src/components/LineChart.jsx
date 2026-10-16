@@ -76,7 +76,7 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
       const v = Math.round(v0 / step) * step || 0
       const y = Y(v)
       gridlines.push(<g key={'y' + v}>
-        <line x1={P.l} y1={y} x2={W - P.r} y2={y} stroke="var(--sep-op)" strokeWidth="1" strokeDasharray="2 4" />
+        <line x1={P.l} y1={y} x2={W - P.r} y2={y} stroke="var(--sep-op)" strokeWidth=".5" opacity=".7" />
         <text x={P.l - 5} y={y + 3.5} textAnchor="end" fontSize="9.5" fill="var(--label-2)">{fmtNum(v)}</text>
       </g>)
     }
@@ -95,7 +95,7 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
       if (i % every) return
       const x = X(tk.t)
       gridlines.push(<g key={'x' + i}>
-        <line x1={x} y1={P.t} x2={x} y2={H - P.b} stroke="var(--sep-op)" strokeWidth="1" strokeDasharray="2 4" />
+        <line x1={x} y1={H - P.b} x2={x} y2={H - P.b + 3} stroke="var(--sep-op)" strokeWidth=".5" />
         <text x={x} y={H - 7} textAnchor={tk.anchor || 'middle'} fontSize="9.5" fill="var(--label-2)">{tk.txt}</text>
       </g>)
     })
@@ -128,7 +128,7 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
       onTouchStart={onMove} onTouchMove={onMove}>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ aspectRatio: `${W}/${H}` }}>
         <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={color} stopOpacity=".28" />
+          <stop offset="0" stopColor={color} stopOpacity=".32" />
           <stop offset="1" stopColor={color} stopOpacity="0" />
         </linearGradient></defs>
         {gridlines}
@@ -147,10 +147,11 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
           </g>
         }) : <>
           <polygon points={`${P.l},${H - P.b} ${poly} ${X(last.t).toFixed(1)},${H - P.b}`} fill={`url(#${gid})`} />
-          <polyline points={poly} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          <polyline points={poly} fill="none" stroke={color} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
           {marked && pts.map((p, i) => (p.m == null ? null :
             <circle key={'m' + i} cx={X(p.t)} cy={Y(p.y)} r={2.4 + p.m * 3} fill={color} opacity={0.3 + p.m * 0.7} />))}
-          <circle cx={X(last.t)} cy={Y(last.y)} r="4" fill={color} />
+          <circle cx={X(last.t)} cy={Y(last.y)} r="7" fill={color} opacity=".18" />
+          <circle cx={X(last.t)} cy={Y(last.y)} r="4" fill={color} stroke="var(--bg)" strokeWidth="1.5" />
         </>}
         {hover && <g>
           <line className="cvl" x1={hover.x} y1={P.t} x2={hover.x} y2={H - P.b} stroke="var(--label-3)" strokeWidth="1" strokeDasharray="3 3" />

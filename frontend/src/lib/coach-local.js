@@ -22,6 +22,7 @@ import anthropic from '../../../api/coach/core/adapters/anthropic.js'
 import openai from '../../../api/coach/core/adapters/openai.js'
 import gemini from '../../../api/coach/core/adapters/gemini.js'
 import compatible from '../../../api/coach/core/adapters/compatible.js'
+import openrouter from '../../../api/coach/core/adapters/openrouter.js'
 import { nativeFetch } from './capacitor-fetch.js'
 import { getApiKey } from './coach-secrets.js'
 import { loadCoachDevice, saveCoachDevice } from './coach-device.js'
@@ -29,8 +30,7 @@ import { planHash } from './coach.js'
 import { todayISO } from './format.js'
 import { t, getLang } from './i18n.js'
 
-export const ADAPTERS = { anthropic, openai, gemini, compatible }
-export const LOCAL_DAILY_CAP = 10
+export const ADAPTERS = { anthropic, openai, gemini, openrouter, compatible }
 // Five minutes is right for a cloud API and wrong for a model on somebody's laptop; the
 // OpenAI-compatible endpoint is the one that may be local, so it gets the long budget.
 export const TIMEOUT_MS = 5 * 60000
@@ -40,6 +40,7 @@ const PENDING_DAYS = 14
 const HANDLE_LENGTH = 16
 
 let job = null
+let ctl = null    // aborts the provider call of the run in flight
 let lastError = null
 let last = null   // how the most recent job ended — the same shape the server's status() reports
 // Reported to the screens through the same status shape the server answers with; a toast is
@@ -67,25 +68,12 @@ async function handle() {
   return h
 }
 
-/* ---------- the cap ---------- */
-
-async function capState() {
-  const d = await loadCoachDevice()
-  const today = todayISO()
-  const used = d.daily && d.daily.d === today ? d.daily.n : 0
-  return { used, limit: LOCAL_DAILY_CAP }
-}
-async function bumpDaily() {
-  const { used } = await capState()
-  await saveCoachDevice({ daily: { d: todayISO(), n: used + 1 } })
-}
-
 /* ---------- the API surface coach-api.js dispatches to ---------- */
 
 export async function localStatus() {
   const d = await loadCoachDevice()
   if (d.pending && d.pending.expiresAt && d.pending.expiresAt < Date.now()) await saveCoachDevice({ pending: null })
-  return { job, pending: (await loadCoachDevice()).pending || null, cap: await capState(), lastError, last }
+  return { job, pending: (await loadCoachDevice()).pending || null, lastError, last }
 }
 
 export const localReview = (S, note) => start(S, 'review', { note: note ? String(note).slice(0, 1000) : null })
@@ -118,6 +106,13 @@ export async function localModels(settings, key) {
   return adapter.models(cfgOf(settings), envOf(settings, key), { fetch: nativeFetch, timeoutMs: 20000 })
 }
 
+/** Credit left on the account, for a provider that reports one (OpenRouter). */
+export async function localBalance(settings, key) {
+  const adapter = ADAPTERS[settings.provider]
+  if (!adapter) return { ok: false, error: 'unknown provider' }
+  return adapter.balance(cfgOf(settings), envOf(settings, key), { fetch: nativeFetch, timeoutMs: 20000 })
+}
+
 const hostOf = url => { try { return new URL(url).host } catch { return url || '' } }
 
 /* ---------- running a job ---------- */
@@ -128,10 +123,8 @@ async function start(S, kind, opts) {
   const d = await loadCoachDevice()
   const adapter = ADAPTERS[d.provider]
   if (d.mode !== 'byok' || !adapter) throw Object.assign(new Error(t('The Coach isn’t set up on this phone.')), { status: 503, code: 'off' })
-  const cap = await capState()
-  if (cap.used >= cap.limit) throw Object.assign(new Error(t('The Coach is taking a breather. You’ve used today’s {0} runs on this phone.', cap.limit)), { status: 429, code: 'cap' })
 
-  await bumpDaily()
+  ctl = new AbortController()
   job = { id: 'local-' + Date.now().toString(36), kind, state: 'running', startedAt: Date.now() }
   lastError = null
   // Not awaited: the screens poll, exactly as they do against a server.
@@ -148,7 +141,7 @@ async function run(S, kind, opts, d, adapter) {
   const attempt = await runPipeline({
     adapter, cfg: cfgOf(d), kind, payload,
     model: d.model || HTTP_PROVIDERS[d.provider].defaultModel, timeoutMs: timeoutFor(d.provider),
-    invokeOpts: { env: envOf(d, key), fetch: nativeFetch }
+    invokeOpts: { env: envOf(d, key), fetch: nativeFetch, signal: ctl.signal }
   })
   if (!attempt.ok) {
     // There is no admin card on a phone, so the reason has to reach the person holding it:
@@ -187,4 +180,13 @@ function workoutMetaOf(S, workoutId) {
 }
 
 // Test seam.
-export function _resetLocal() { job = null; lastError = null; last = null }
+/** The app is back on screen. A request the OS suspended may never answer (the native bridge keeps
+ *  its promise pending), which would leave "thinking…" up and refuse every new ask as busy. Give a
+ *  survivor a moment to land, then cut it loose: it ends as a timeout and the user can ask again. */
+export function localResumed(awayMs, graceMs = 8000) {
+  const mine = job
+  if (!mine || awayMs < 15000) return   // a short look at another app does not kill a request
+  setTimeout(() => { if (job === mine && ctl) ctl.abort() }, graceMs)
+}
+
+export function _resetLocal() { job = null; ctl = null; lastError = null; last = null }

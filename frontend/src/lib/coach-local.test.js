@@ -143,7 +143,7 @@ describe('the Coach on a phone with its own key', () => {
     expect((await loadCoachDevice()).handle).toBe(first)
   })
 
-  it('refuses without consent, refuses while busy, and stops at the daily cap', async () => {
+  it('refuses without consent, refuses while busy, and has no daily cap', async () => {
     const noConsent = state(); noConsent.coach.consent = null
     await expect(local.localReview(noConsent)).rejects.toMatchObject({ code: 'consent' })
 
@@ -151,11 +151,11 @@ describe('the Coach on a phone with its own key', () => {
     await expect(local.localReview(state())).rejects.toMatchObject({ code: 'busy' })
     await settle()
 
-    // The cap is keyed by the LOCAL date (todayISO), not the UTC one: in the evening in the
-    // Americas the two differ, and a UTC stamp here read as yesterday's record and let the run through.
-    await saveCoachDevice({ daily: { d: todayISO(), n: local.LOCAL_DAILY_CAP } })
-    await expect(local.localReview(state())).rejects.toMatchObject({ code: 'cap' })
-    expect((await local.localStatus()).cap).toEqual({ used: local.LOCAL_DAILY_CAP, limit: local.LOCAL_DAILY_CAP })
+    // There is no daily cap on the phone: however many runs went today, the next one starts.
+    await saveCoachDevice({ daily: { d: todayISO(), n: 500 } })
+    await local.localReview(state())
+    await settle()
+    expect((await local.localStatus()).cap).toBeUndefined()
   })
 
   it('a proposal waits in the device file, expires, and is cleared by resolve', async () => {

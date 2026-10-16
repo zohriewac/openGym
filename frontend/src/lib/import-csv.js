@@ -704,10 +704,11 @@ export function parseWorkoutCSV(text, { unit = 'kg', customEx = [] } = {}) {
 export function parseBodyweight(text, { unit = 'kg' } = {}) {
   const s = String(text)
   const out = new Map()          // iso date -> { w, t }  (one weigh-in per day, the last)
+  const hr = new Map()           // iso date -> { bpm, t }  resting heart rate, the last of the day
   let fileUnit = ''
   let garmin = false
 
-  if (s.includes('HKQuantityTypeIdentifierBodyMass')) {
+  if (s.includes('HKQuantityTypeIdentifierBodyMass') || s.includes('HKQuantityTypeIdentifierRestingHeartRate')) {
     const re = /<Record[^>]*type="HKQuantityTypeIdentifierBodyMass"[^>]*>/g
     let m
     while ((m = re.exec(s))) {
@@ -725,6 +726,13 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
       const w = parseFloat(val[1])
       if (!isFinite(w) || !w || !bodyOk(w, recUnit || unit)) continue
       out.set(when.d, { w, unit: recUnit, t: new Date(dt[1]).getTime() || null })
+    }
+    const hre = /<Record[^>]*type="HKQuantityTypeIdentifierRestingHeartRate"[^>]*>/g
+    while ((m = hre.exec(s))) {
+      const bpm = parseFloat(/value="([\d.]+)"/.exec(m[0])?.[1])
+      const dt = /startDate="([^"]+)"/.exec(m[0]) || /creationDate="([^"]+)"/.exec(m[0])
+      const when = dt && parseWhen(dt[1])
+      if (when && isFinite(bpm) && bpm > 0 && bpm < 250) hr.set(when.d, { bpm: Math.round(bpm), t: new Date(dt[1]).getTime() || null })
     }
   } else {
     let rows = parseCSV(s)
@@ -756,7 +764,7 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
     }
   }
 
-  if (!out.size) return { error: 'unrecognised' }
+  if (!out.size && !hr.size) return { error: 'unrecognised' }
   const units = new Set([...out.values()].map(b => b.unit || fileUnit).filter(Boolean))
   fileUnit = [...units].sort().join(' / ')
   const converted = [...units].some(sourceUnit => sourceUnit !== unit)
@@ -771,6 +779,7 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
   return {
     kind: 'bodyweight', source: garmin ? 'Garmin Connect' : 'Apple Health',
     bodyweight: dates.map(d => ({ d, w: conv(out.get(d)), t: out.get(d).t || new Date(d).getTime() })),
+    restingHr: [...hr.keys()].sort().map(d => ({ d, bpm: hr.get(d).bpm, t: hr.get(d).t || new Date(d).getTime() })),
     fileUnit, converted, from: dates[0], to: dates[dates.length - 1],
   }
 }
@@ -800,7 +809,10 @@ export function mergeImport(S, parsed) {
     const have = new Set(S.bodyweight.map(b => b.d))
     const fresh = parsed.bodyweight.filter(b => !have.has(b.d))
     S.bodyweight = [...S.bodyweight, ...fresh].sort((a, b) => (a.d < b.d ? -1 : 1))
-    return { added: fresh.length, skipped: parsed.bodyweight.length - fresh.length }
+    const haveHr = new Set((S.restingHr || []).map(h => h.d))
+    const freshHr = (parsed.restingHr || []).filter(h => !haveHr.has(h.d))
+    S.restingHr = [...(S.restingHr || []), ...freshHr].sort((a, b) => (a.d < b.d ? -1 : 1))
+    return { added: fresh.length, skipped: parsed.bodyweight.length - fresh.length, ...(parsed.restingHr?.length ? { hrAdded: freshHr.length } : {}) }
   }
   const have = new Set(S.workouts.map(w => w.d))
   // Every parse invents fresh ids for the names it cannot match, and a later export of the same

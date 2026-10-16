@@ -47,7 +47,7 @@ export default function CoachChat() {
   const storeReady = useStore(s => s.ready)
   const toast = useUI(s => s.toast)
   const openSheet = useUI(s => s.openSheet)
-  const { job, pending, cap, loading, lastError, last, refresh, maxMessageLen } = useCoachStatus(true)
+  const { job, pending, loading, lastError, last, refresh, maxMessageLen } = useCoachStatus(true)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const endRef = useRef(null)
@@ -225,7 +225,6 @@ export default function CoachChat() {
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
         <button className="send" onClick={send} disabled={!text.trim() || busy || !!job} aria-label={t('Send')}><Icon name="arrowUp" /></button>
       </div>
-      {cap?.limit > 0 && <div className="composer-cap">{t('{0} of {1} Coach runs used today', cap.used, cap.limit)}</div>}
     </div>
   </div>
 }

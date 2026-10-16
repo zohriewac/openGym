@@ -168,7 +168,7 @@ export function demoCohort(S) {
 
 /* ---------------- the API surface the demo stands in for ---------------- */
 
-export const demoStatus = () => ({ job, pending, cap: { used: 0, limit: 0 }, lastError })
+export const demoStatus = () => ({ job, pending, lastError })
 
 function start(kind, make) {
   if (job) throw Object.assign(new Error(t('The Coach is already thinking about your training.')), { status: 409 })

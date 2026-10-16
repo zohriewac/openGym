@@ -93,7 +93,7 @@ export default function RestTimer() {
 
   if (work) return (
     <div id="timer" className="working">
-      <div className="bar" aria-hidden="true"><i style={{ width: pct + '%' }} /></div>
+      <div className="bar" aria-hidden="true"><i style={{ transform: 'scaleX(' + pct / 100 + ')' }} /></div>
       <div className="tclock">
         <span className="t">{work.left <= 0 && work.overtime ? '+' + clock(-work.left) : clock(work.left)}</span>
         {work.label && <span className="lbl">{work.label}</span>}
@@ -113,8 +113,8 @@ export default function RestTimer() {
   // turns Ready, so a thumb on +15 never lands on −15.
   const label = timer.kind === 'switch' ? t('Switch sides') : timer.paused ? t('Paused') : t('Rest')
   return (
-    <div id="timer" className={'rest' + (timer.paused ? ' paused' : '') + (timer.kind === 'switch' ? ' switch' : '') + (timer.ready ? ' ready' : '')}>
-      <div className="bar" aria-hidden="true"><i style={{ width: pct + '%' }} /></div>
+    <div id="timer" className={'rest' + (timer.paused ? ' paused' : '') + (timer.kind === 'switch' ? ' switch' : '') + (timer.ready ? ' ready' : '') + (!timer.ready && !timer.paused && timer.left <= 5 ? ' low' : '')}>
+      <div className="bar" aria-hidden="true"><i style={{ transform: 'scaleX(' + pct / 100 + ')' }} /></div>
       <button type="button" className="tclock" onClick={adjustRestSheet}
         aria-label={(timer.ready ? t('Ready') : clock(timer.left)) + '. ' + t('Change the time left')}>
         <span className="t" role={timer.ready ? 'status' : undefined} data-alt={timer.ready ? '0:00' : t('Ready')}>{timer.ready ? t('Ready') : clock(timer.left)}</span>
