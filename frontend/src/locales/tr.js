@@ -2245,4 +2245,6 @@ export default {
   'Recent records': 'Son rekorlar',
   '7-day avg': '7 günlük ortalama',
   'Resting heart rate': 'Dinlenme kalp atış hızı',
+  'Pick reps': 'Tekrar seç',
+  'Type reps': 'Tekrar yaz',
 }

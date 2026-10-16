@@ -45,6 +45,7 @@ struct WebView: UIViewRepresentable {
         cfg.setURLSchemeHandler(BundleSchemeHandler(), forURLScheme: "app")
         cfg.userContentController.addScriptMessageHandler(HealthBridge.shared, contentWorld: .page, name: "health")
         cfg.userContentController.add(WidgetBridge.shared, contentWorld: .page, name: "widget")
+        cfg.userContentController.add(HapticBridge.shared, contentWorld: .page, name: "haptic")
         cfg.userContentController.addScriptMessageHandler(HttpBridge.shared, contentWorld: .page, name: "http")
         cfg.mediaTypesRequiringUserActionForPlayback = []
         cfg.allowsInlineMediaPlayback = true

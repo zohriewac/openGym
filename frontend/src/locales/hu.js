@@ -2248,4 +2248,6 @@ export default {
   'Recent records': 'Legutóbbi rekordok',
   '7-day avg': '7 napos átlag',
   'Resting heart rate': 'Nyugalmi pulzus',
+  'Pick reps': 'Ismétlések választása',
+  'Type reps': 'Ismétlések beírása',
 }

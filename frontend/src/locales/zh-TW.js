@@ -2238,4 +2238,6 @@ export default {
   'Recent records': '近期紀錄',
   '7-day avg': '7 天平均',
   'Resting heart rate': '靜止心率',
+  'Pick reps': '選擇次數',
+  'Type reps': '輸入次數',
 }

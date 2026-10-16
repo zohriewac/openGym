@@ -2245,4 +2245,6 @@ export default {
   'Recent records': '近期纪录',
   '7-day avg': '7 天平均',
   'Resting heart rate': '静息心率',
+  'Pick reps': '选择次数',
+  'Type reps': '输入次数',
 }

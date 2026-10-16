@@ -2249,4 +2249,6 @@ export default {
   'Recent records': 'Недавние рекорды',
   '7-day avg': 'Среднее за 7 дней',
   'Resting heart rate': 'Пульс покоя',
+  'Pick reps': 'Выбрать повторы',
+  'Type reps': 'Ввести повторы',
 }

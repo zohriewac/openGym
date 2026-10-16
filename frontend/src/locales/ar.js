@@ -2300,4 +2300,6 @@ export default {
   'Recent records': 'أحدث الأرقام القياسية',
   '7-day avg': 'متوسط 7 أيام',
   'Resting heart rate': 'معدل ضربات القلب أثناء الراحة',
+  'Pick reps': 'اختر التكرارات',
+  'Type reps': 'اكتب التكرارات',
 }

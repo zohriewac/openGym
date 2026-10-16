@@ -2324,4 +2324,6 @@ export default {
   'Recent records': 'সাম্প্রতিক রেকর্ড',
   '7-day avg': '৭ দিনের গড়',
   'Resting heart rate': 'বিশ্রামকালীন হৃদস্পন্দন',
+  'Pick reps': 'রেপ বাছুন',
+  'Type reps': 'রেপ টাইপ করুন',
 }

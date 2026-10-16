@@ -2245,4 +2245,6 @@ export default {
   'Recent records': 'Recordes recentes',
   '7-day avg': 'Média de 7 dias',
   'Resting heart rate': 'Frequência cardíaca em repouso',
+  'Pick reps': 'Escolher repetições',
+  'Type reps': 'Escrever repetições',
 }

@@ -2256,4 +2256,6 @@ export default {
   'Recent records': 'สถิติล่าสุด',
   '7-day avg': 'ค่าเฉลี่ย 7 วัน',
   'Resting heart rate': 'อัตราการเต้นของหัวใจขณะพัก',
+  'Pick reps': 'เลือกจำนวนครั้ง',
+  'Type reps': 'พิมพ์จำนวนครั้ง',
 }

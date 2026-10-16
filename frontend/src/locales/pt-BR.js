@@ -1408,4 +1408,7 @@ export const PT_BR_OVERRIDES = {
   'Resting heart rate': 'Frequência cardíaca em repouso',
 }
 
-export default { ...pt, ...PT_BR_OVERRIDES }
+export default { ...pt, ...PT_BR_OVERRIDES,
+  'Pick reps': 'Escolher repetições',
+  'Type reps': 'Digitar repetições',
+}

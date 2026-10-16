@@ -2265,4 +2265,6 @@ export default {
   'Recent records': 'Neueste Rekorde',
   '7-day avg': '7-Tage-Schnitt',
   'Resting heart rate': 'Ruhepuls',
+  'Pick reps': 'Wiederholungen wählen',
+  'Type reps': 'Wiederholungen eintippen',
 }

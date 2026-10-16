@@ -2245,4 +2245,6 @@ export default {
   'Recent records': 'हाल के रिकॉर्ड',
   '7-day avg': '7 दिन का औसत',
   'Resting heart rate': 'विश्राम हृदय गति',
+  'Pick reps': 'रेप्स चुनें',
+  'Type reps': 'रेप्स टाइप करें',
 }

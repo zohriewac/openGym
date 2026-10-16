@@ -2245,4 +2245,6 @@ export default {
   'Recent records': '최근 기록',
   '7-day avg': '7일 평균',
   'Resting heart rate': '안정 시 심박수',
+  'Pick reps': '횟수 선택',
+  'Type reps': '횟수 입력',
 }

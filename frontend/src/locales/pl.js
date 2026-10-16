@@ -2245,4 +2245,6 @@ export default {
   'Recent records': 'Ostatnie rekordy',
   '7-day avg': 'Średnia z 7 dni',
   'Resting heart rate': 'Tętno spoczynkowe',
+  'Pick reps': 'Wybierz powtórzenia',
+  'Type reps': 'Wpisz powtórzenia',
 }
