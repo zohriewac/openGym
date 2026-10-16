@@ -2245,4 +2245,6 @@ export default {
   'Resting heart rate': 'Пульс спокою',
   'Pick reps': 'Обрати повтори',
   'Type reps': 'Ввести повтори',
+  'Before 10:00': 'До 10:00',
+  '10:00 or later': 'Від 10:00 і пізніше',
 }

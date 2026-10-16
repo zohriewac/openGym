@@ -1407,6 +1407,8 @@ export const PT_BR_OVERRIDES = {
   'Recent records': 'Recordes recentes',
   '7-day avg': 'Média de 7 dias',
   'Resting heart rate': 'Frequência cardíaca em repouso',
+  'Before 10:00': 'Antes das 10:00',
+  '10:00 or later': '10:00 ou depois',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES,

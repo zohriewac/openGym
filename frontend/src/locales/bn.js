@@ -2327,4 +2327,6 @@ export default {
   'Resting heart rate': 'বিশ্রামকালীন হৃদস্পন্দন',
   'Pick reps': 'রেপ বাছুন',
   'Type reps': 'রেপ টাইপ করুন',
+  'Before 10:00': '১০:০০ এর আগে',
+  '10:00 or later': '১০:০০ বা পরে',
 }

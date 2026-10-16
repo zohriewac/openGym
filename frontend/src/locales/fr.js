@@ -2248,4 +2248,6 @@ export default {
   'Resting heart rate': 'Fréquence cardiaque au repos',
   'Pick reps': 'Choisir les répétitions',
   'Type reps': 'Saisir les répétitions',
+  'Before 10:00': 'Avant 10 h 00',
+  '10:00 or later': '10 h 00 ou plus tard',
 }

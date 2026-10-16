@@ -2268,4 +2268,6 @@ export default {
   'Resting heart rate': 'Ruhepuls',
   'Pick reps': 'Wiederholungen wählen',
   'Type reps': 'Wiederholungen eintippen',
+  'Before 10:00': 'Vor 10:00',
+  '10:00 or later': 'Ab 10:00',
 }

@@ -2251,4 +2251,6 @@ export default {
   'Resting heart rate': 'Nyugalmi pulzus',
   'Pick reps': 'Ismétlések választása',
   'Type reps': 'Ismétlések beírása',
+  'Before 10:00': '10:00 előtt',
+  '10:00 or later': '10:00 vagy később',
 }

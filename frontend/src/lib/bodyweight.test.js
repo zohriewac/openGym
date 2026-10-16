@@ -40,7 +40,7 @@ describe('weeklyWeights', () => {
   })
 })
 
-import { weightSeries } from './bodyweight.js'
+import { weightSeries, isMorningWeighIn } from './bodyweight.js'
 describe('weightSeries', () => {
   const day = d => new Date(d).getTime()
   it('places entries on their day, not on when they were written, oldest first', () => {
@@ -59,5 +59,11 @@ describe('weightSeries', () => {
   it('drops bad entries and old days', () => {
     expect(weightSeries([{ d: '2026-10-01', w: 0 }, { w: 80 }, null, { d: 'x', w: 80 }])).toEqual([])
     expect(weightSeries([{ d: '2026-10-01', w: 80 }], day('2026-10-02'))).toEqual([])
+  })
+  it('splits at 10:00 local; an entry with no time counts as later', () => {
+    const at = (h, m = 0) => new Date(2026, 9, 10, h, m).getTime()
+    expect(isMorningWeighIn({ t: at(9, 59) })).toBe(true)
+    expect(isMorningWeighIn({ t: at(10) })).toBe(false)
+    expect(isMorningWeighIn({ d: '2026-10-10' })).toBe(false)
   })
 })

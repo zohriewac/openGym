@@ -2241,4 +2241,6 @@ export default {
   'Resting heart rate': '靜止心率',
   'Pick reps': '選擇次數',
   'Type reps': '輸入次數',
+  'Before 10:00': '10:00 之前',
+  '10:00 or later': '10:00 或之後',
 }

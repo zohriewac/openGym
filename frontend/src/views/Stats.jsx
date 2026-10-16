@@ -27,7 +27,7 @@ import { anchorsByWorkout, resolveSetRir } from '../lib/recovery.js'
 import { Button, Segmented, SelectRow } from '../components/ui.jsx'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import { isWarmupRow } from '../lib/workout-model.js'
-import { weightSeries, bodyweightKgOf } from '../lib/bodyweight.js'
+import { weightSeries, bodyweightKgOf, isMorningWeighIn } from '../lib/bodyweight.js'
 
 // Set 1 to 5 on the per-set chart — system colours, so each line keeps its hue in dark mode.
 const SET_COLORS = ['var(--blue)', 'var(--green)', 'var(--orange)', 'var(--purple)', 'var(--pink)']
@@ -412,9 +412,17 @@ export default function Stats() {
   const kind = displayScale(S)
   const hd = scaleName(kind)
 
-  const bwPts = weightSeries(S.bodyweight, range === 0 ? 0 : now - range * 86400000)
-  const bw30 = weightSeries(S.bodyweight, now - 30 * 86400000)
-  const bwDelta30 = bw30.length > 1 ? bw30[bw30.length - 1].y - bw30[0].y : null
+  // Two curves, as on Home: weigh-ins before 10:00 and the rest. The 30-day change reads the
+  // morning curve (the comparable one) and falls back to the later one when that has too few days.
+  const bwSince = range === 0 ? 0 : now - range * 86400000
+  const bwPts = weightSeries(S.bodyweight, bwSince)
+  const bwSplit = [
+    { label: t('Before 10:00'), color: 'var(--blue)', points: weightSeries(S.bodyweight, bwSince, isMorningWeighIn) },
+    { label: t('10:00 or later'), color: 'var(--orange)', points: weightSeries(S.bodyweight, bwSince, b => !isMorningWeighIn(b)) },
+  ].filter(s => s.points.length)
+  const bwAnchors = bwPts.map(p => ({ ...p, note: bwSplit.flatMap(s => s.points).filter(q => q.t === p.t).map(q => fmtNum(q.y) + ' ' + S.unit).join(' · ') }))
+  const bw30 = [isMorningWeighIn, b => !isMorningWeighIn(b)].map(k => weightSeries(S.bodyweight, now - 30 * 86400000, k)).find(s => s.length > 1)
+  const bwDelta30 = bw30 ? bw30[bw30.length - 1].y - bw30[0].y : null
   const workouts = S.workouts
   const monthW = workouts.filter(w => workoutDay(w)?.slice(0, 7) === todayISO().slice(0, 7)).length
 
@@ -670,7 +678,10 @@ export default function Stats() {
         </div>
         <Segmented className="seg-range" value={range} onChange={setRange}
           options={rangeOptions()} />
-        <div className="chart"><LineChart points={bwPts} h={160} unit={S.unit} goal={S.targetW} /></div>
+        <div className="chart"><LineChart points={bwAnchors} series={bwSplit} h={160} unit={S.unit} goal={S.targetW} /></div>
+        {bwSplit.length > 1 && <div className="row small muted" style={{ gap: 12, justifyContent: 'center', marginTop: 4 }}>
+          {bwSplit.map(s => <span key={s.label} className="row" style={{ gap: 5 }}><span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 4, background: s.color }} />{s.label}</span>)}
+        </div>}
         {/* every weigh-in, week by week with its average (Discord 'Weight') */}
         {S.bodyweight.length > 0 && <div className="row" style={{ justifyContent: 'flex-end', marginTop: 4 }}>
           <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={weighInsSheet}>{t('All weigh-ins')}</Button>

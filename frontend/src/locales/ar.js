@@ -2303,4 +2303,6 @@ export default {
   'Resting heart rate': 'معدل ضربات القلب أثناء الراحة',
   'Pick reps': 'اختر التكرارات',
   'Type reps': 'اكتب التكرارات',
+  'Before 10:00': 'قبل 10:00',
+  '10:00 or later': '10:00 أو بعدها',
 }

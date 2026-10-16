@@ -2248,4 +2248,6 @@ export default {
   'Resting heart rate': 'Tętno spoczynkowe',
   'Pick reps': 'Wybierz powtórzenia',
   'Type reps': 'Wpisz powtórzenia',
+  'Before 10:00': 'Przed 10:00',
+  '10:00 or later': 'Od 10:00',
 }

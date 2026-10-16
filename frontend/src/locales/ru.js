@@ -2252,4 +2252,6 @@ export default {
   'Resting heart rate': 'Пульс покоя',
   'Pick reps': 'Выбрать повторы',
   'Type reps': 'Ввести повторы',
+  'Before 10:00': 'До 10:00',
+  '10:00 or later': 'С 10:00 и позже',
 }

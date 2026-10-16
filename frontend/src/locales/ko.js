@@ -2248,4 +2248,6 @@ export default {
   'Resting heart rate': '안정 시 심박수',
   'Pick reps': '횟수 선택',
   'Type reps': '횟수 입력',
+  'Before 10:00': '오전 10시 이전',
+  '10:00 or later': '오전 10시 이후',
 }

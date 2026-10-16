@@ -2248,4 +2248,6 @@ export default {
   'Resting heart rate': 'विश्राम हृदय गति',
   'Pick reps': 'रेप्स चुनें',
   'Type reps': 'रेप्स टाइप करें',
+  'Before 10:00': '10:00 से पहले',
+  '10:00 or later': '10:00 या उसके बाद',
 }

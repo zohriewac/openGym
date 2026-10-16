@@ -2248,4 +2248,6 @@ export default {
   'Resting heart rate': 'Dinlenme kalp atış hızı',
   'Pick reps': 'Tekrar seç',
   'Type reps': 'Tekrar yaz',
+  'Before 10:00': '10:00’dan önce',
+  '10:00 or later': '10:00 ve sonrası',
 }

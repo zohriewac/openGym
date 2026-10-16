@@ -755,12 +755,12 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
       // Garmin writes the unit into the cell ("82.1 kg", "181.0 lbs"), per row.
       const rowUnit = /lb/i.test(cellW) ? 'lb' : /kg/i.test(cellW) ? 'kg' : ''
       if (!when || !w || !bodyOk(w, rowUnit || fileUnit || unit)) continue
-      // The weigh-in's own clock time (a separate column in Garmin's CSV) is what the graph
-      // splits morning from evening on, so it must survive; date-only rows keep the old t.
+      // The weigh-in's clock time (Garmin: a separate column) is what the graph splits morning
+      // from evening on, in local time. No time of day in the file -> no `t`: midnight would read
+      // as a morning weigh-in.
       const clock = garmin && /(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap])?/i.exec(String(rows[i][map.time] ?? ''))
-      const mins = clock ? ((clock[3] ? +clock[1] % 12 + (/p/i.test(clock[3]) ? 12 : 0) : +clock[1]) * 60) + +clock[2] : null
-      const t = mins == null ? new Date(when.d).getTime() + (when.t ?? 0) : new Date(`${when.d}T00:00`).getTime() + mins * 60000
-      out.set(when.d, { w, unit: rowUnit, t })
+      const ms = clock ? (((clock[3] ? +clock[1] % 12 + (/p/i.test(clock[3]) ? 12 : 0) : +clock[1]) * 60) + +clock[2]) * 60000 : when.t
+      out.set(when.d, { w, unit: rowUnit, t: ms == null ? null : new Date(`${when.d}T00:00`).getTime() + ms })
     }
   }
 
@@ -778,7 +778,7 @@ export function parseBodyweight(text, { unit = 'kg' } = {}) {
   const dates = [...out.keys()].sort()
   return {
     kind: 'bodyweight', source: garmin ? 'Garmin Connect' : 'Apple Health',
-    bodyweight: dates.map(d => ({ d, w: conv(out.get(d)), t: out.get(d).t || new Date(d).getTime() })),
+    bodyweight: dates.map(d => ({ d, w: conv(out.get(d)), ...(out.get(d).t ? { t: out.get(d).t } : {}) })),
     restingHr: [...hr.keys()].sort().map(d => ({ d, bpm: hr.get(d).bpm, t: hr.get(d).t || new Date(d).getTime() })),
     fileUnit, converted, from: dates[0], to: dates[dates.length - 1],
   }
