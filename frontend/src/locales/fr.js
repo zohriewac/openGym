@@ -2242,4 +2242,6 @@ export default {
   'Your sports watch, calling you back.': 'Ta montre de sport te rappelle.',
   'Coach wants you back on the bar.': 'Le coach te veut de retour à la barre.',
   'Gentle, for headphones or a quiet room.': 'Tout doux, pour un casque ou une pièce calme.',
+  'Before 10:00': 'Avant 10 h 00',
+  '10:00 or later': '10 h 00 ou plus tard',
 }

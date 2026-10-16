@@ -2245,4 +2245,6 @@ export default {
   'Your sports watch, calling you back.': 'A sportórád visszahív.',
   'Coach wants you back on the bar.': 'Az edző visszavár a rúdhoz.',
   'Gentle, for headphones or a quiet room.': 'Halk, fülhallgatóhoz vagy csendes helyre.',
+  'Before 10:00': '10:00 előtt',
+  '10:00 or later': '10:00 vagy később',
 }

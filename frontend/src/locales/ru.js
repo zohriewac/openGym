@@ -2246,4 +2246,6 @@ export default {
   'Your sports watch, calling you back.': 'Ваши спортивные часы зовут вас обратно.',
   'Coach wants you back on the bar.': 'Тренер ждёт вас обратно у штанги.',
   'Gentle, for headphones or a quiet room.': 'Тихий, для наушников или спокойного зала.',
+  'Before 10:00': 'До 10:00',
+  '10:00 or later': 'С 10:00 и позже',
 }

@@ -25,3 +25,11 @@ describe('Apple Health body-weight units', () => {
     expect(parseBodyweight(record('01', 80, 'kg')).converted).toBe(false)
   })
 })
+
+describe('weigh-in time of day (decides the before/after 10:00 split)', () => {
+  it('keeps a CSV row\'s clock time in local time, and no `t` when the file has none', () => {
+    const r = parseBodyweight('Date,Weight (kg)\n2026-09-01 07:30,80\n2026-09-02,81').bodyweight
+    expect(new Date(r[0].t).getHours()).toBe(7)
+    expect('t' in r[1]).toBe(false)
+  })
+})
