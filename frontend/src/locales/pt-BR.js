@@ -506,7 +506,6 @@ export const PT_BR_OVERRIDES = {
   'Undo': 'Desfazer',
   'Nothing to undo': 'Nada para desfazer',
   'Plan design and reviews, from your own training': 'Criação de planos e revisões, a partir do seu próprio treino',
-  '{0} of {1} Coach runs used today': '{0} de {1} usos do Treinador hoje',
   'Let the Coach build my plan': 'Deixar o Treinador criar meu plano',
   'Your answers': 'Suas respostas',
   'Not set yet': 'Ainda não definido',
@@ -578,7 +577,6 @@ export const PT_BR_OVERRIDES = {
   'Runs on your openGym server': 'Roda no seu servidor openGym',
   'Save and use the Coach': 'Salvar e usar o Treinador',
   'The Coach is already thinking about your training.': 'O Treinador já está pensando no seu treino.',
-  'The Coach is taking a breather. You’ve used today’s {0} runs on this phone.': 'O Treinador está tomando um fôlego. Você já usou os {0} usos de hoje neste celular.',
   'The Coach isn’t set up on this phone.': 'O Treinador não está configurado neste celular.',
   'The Coach needs your go-ahead first.': 'O Treinador precisa primeiro da sua autorização.',
   'The key is stored in this phone’s secure storage and never leaves it except to call the provider.': 'A chave fica no armazenamento seguro deste celular e só sai dele para chamar o provedor.',
@@ -1403,6 +1401,11 @@ export const PT_BR_OVERRIDES = {
   'Gentle, for headphones or a quiet room.': 'Suave, para fones de ouvido ou um lugar silencioso.',
   'Fewer than two workouts in this period. Pick a longer one.': 'Menos de dois treinos neste período. Escolha um mais longo.',
   'Releases are checked on GitHub. The download is verified against its checksum before the installer opens.': 'As versões são verificadas no GitHub. O download é conferido pela soma de verificação antes de abrir o instalador.',
+  'Last week': 'Semana passada',
+  'Trained {0} of the last {1} weeks': 'Treinou {0} das últimas {1} semanas',
+  'Recent records': 'Recordes recentes',
+  '7-day avg': 'Média de 7 dias',
+  'Resting heart rate': 'Frequência cardíaca em repouso',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

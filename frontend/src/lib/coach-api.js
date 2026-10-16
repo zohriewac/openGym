@@ -98,7 +98,7 @@ export const disconnectCredential = () => api('/api/admin/coach/disconnect', { m
  * failing while you are mid-workout is not something to interrupt anyone about.
  */
 export function useCoachStatus(active = true) {
-  const [state, setState] = useState({ job: null, pending: null, cap: null, loading: true })
+  const [state, setState] = useState({ job: null, pending: null, loading: true })
   const timer = useRef(null)
   const loop = useRef(null)   // the running poll loop's `tick`, so a manual refresh can re-pace it
   const seq = useRef(0)       // which status request is the newest one

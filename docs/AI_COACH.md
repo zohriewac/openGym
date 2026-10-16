@@ -19,6 +19,7 @@ rest of this document applies to you.
 | **Anthropic API** | plain HTTPS to `api.anthropic.com` | an API key | default |
 | **OpenAI API** | plain HTTPS to `api.openai.com` | an API key | default |
 | **Google Gemini** | plain HTTPS to `generativelanguage.googleapis.com` | an API key | default |
+| **OpenRouter** | plain HTTPS to `openrouter.ai/api` — the model list and your remaining credit are fetched live, with a refresh button for each | an API key (`sk-or-…`); a management key shows the account total, a normal key its own limit | `openrouter/auto` |
 | **OpenAI-compatible endpoint** | plain HTTPS to a URL you give it — Ollama, LM Studio, vLLM, OpenRouter, a gateway of your own | an API key, optional | default |
 | **Claude (Anthropic)** | the Claude Agent SDK, inside the container | a `claude setup-token` | `coach` |
 | **Codex (OpenAI)** | the Codex CLI, inside the container | Codex's own device sign-in | `coach` |
@@ -180,7 +181,7 @@ unprivileged, and which account is being spent.
 **4. Use it** — as above.
 
 > **On a multi-profile instance, read [Whose account pays](#whose-account-pays) first.** An API
-> key is shared by every profile under the daily limits. A *personal* credential — a Claude Code
+> key is shared by every profile under the instance daily limit, if one is set. A *personal* credential — a Claude Code
 > setup token — binds to the first profile that spends it and **every other profile is refused**,
 > by design: that is the right behaviour when one person's personal subscription is behind it.
 
@@ -222,8 +223,8 @@ to be. The Coach spends a real provider account, and there are two shapes:
 In instance mode it depends on what kind of credential was pasted:
 
 - **An API key** (Anthropic, OpenAI, Gemini, an OpenAI-compatible endpoint) is shared by every
-  profile on the instance. It is metered, issued for exactly this kind of use, and the daily
-  limits in the admin card are what bound what it can spend. This is the shape a household or a
+  profile on the instance. It is metered, issued for exactly this kind of use, and the optional
+  instance daily limit in the admin card is what bounds what it can spend. This is the shape a household or a
   small gym wants.
 - **A personal credential** — a Claude Code setup token or an OAuth login — **binds to the first
   profile that spends it**. Any other profile is refused:
@@ -454,8 +455,8 @@ The App-Store build has no server of its own, so the Coach there is a choice mad
   the same single repair round as the server, in the app. The key is kept in the platform's
   secure storage — Keychain on iOS, the Keystore-backed store on Android — and never in the
   app's state, so it cannot ride along in a backup, an export or a sync. You pay: the screen
-  says which host each request goes to and what leaves the device before you choose, and a
-  local daily cap stands in for the one an admin would have set.
+  says which host each request goes to and what leaves the device before you choose, and
+  there is no daily cap.
 
   A compatible endpoint has to be **`https://`** here. Android does not let apps send
   unencrypted `http://` traffic, so a model on your LAN at `http://ollama.lan:11434` cannot be

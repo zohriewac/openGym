@@ -15,3 +15,11 @@ export function fatigueStateOf(value) {
       ? FATIGUE_STATES.RECOVERING
       : FATIGUE_STATES.FATIGUED
 }
+
+export const FATIGUE_LEVELS = [
+  { at: 0, level: 0 },
+  { at: 0.15, level: 1 },
+  { at: 0.25, level: 2 },
+  { at: 0.4, level: 3 },
+  { at: 0.55, level: 4, exclusive: true },
+]

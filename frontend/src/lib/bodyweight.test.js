@@ -39,3 +39,25 @@ describe('weeklyWeights', () => {
     expect(weeklyWeights(undefined, 1)).toEqual([])
   })
 })
+
+import { weightSeries } from './bodyweight.js'
+describe('weightSeries', () => {
+  const day = d => new Date(d).getTime()
+  it('places entries on their day, not on when they were written, oldest first', () => {
+    const r = weightSeries([
+      { d: '2026-10-10', w: 80, t: day('2026-10-14') }, // back-dated manual entry
+      { d: '2026-10-05', w: 81 },
+      { d: '2026-10-08', w: 80.5, t: day('2026-10-08') + 3600e3 },
+    ])
+    expect(r.map(p => p.d)).toEqual(['2026-10-05', '2026-10-08', '2026-10-10'])
+    expect(r[2].t).toBe(day('2026-10-10'))
+  })
+  it('keeps one point per day, the entry written last', () => {
+    const r = weightSeries([{ d: '2026-10-01', w: 80, t: 5 }, { d: '2026-10-01', w: 79, t: 9 }])
+    expect(r).toEqual([{ t: day('2026-10-01'), y: 79, d: '2026-10-01' }])
+  })
+  it('drops bad entries and old days', () => {
+    expect(weightSeries([{ d: '2026-10-01', w: 0 }, { w: 80 }, null, { d: 'x', w: 80 }])).toEqual([])
+    expect(weightSeries([{ d: '2026-10-01', w: 80 }], day('2026-10-02'))).toEqual([])
+  })
+})

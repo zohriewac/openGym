@@ -12,9 +12,9 @@ import Heatmap from '../components/Heatmap.jsx'
 import Icon from '../components/Icon.jsx'
 import BodyMap, { BodyMapLegend } from '../components/BodyMap.jsx'
 import { loadOfWeeklyPlan, loadOfWorkouts, muscleBalanceWindow, rankOf, MUSCLES, MUSCLE_NAME, musclesOf } from '../lib/muscles.js'
-import { fatigueOf, strengthOf, STRENGTH_FLOOR, LB_TO_KG } from '../lib/recovery.js'
+import { fatigueOf, strengthOf, STRENGTH_FLOOR } from '../lib/recovery.js'
 import { strengthExerciseRowsForMuscle } from '../lib/strength-exercises.js'
-import { fatigueStateOf } from '../lib/recovery-view.js'
+import { fatigueStateOf, FATIGUE_LEVELS } from '../lib/recovery-view.js'
 import { e1rmSeries, best1RM, formulaOf } from '../lib/onerm.js'
 import { currentDbLoad, workoutAs } from '../lib/dumbbells.js'
 import { maxRepsSeries } from '../lib/pyramid.js'
@@ -27,6 +27,7 @@ import { anchorsByWorkout, resolveSetRir } from '../lib/recovery.js'
 import { Button, Segmented, SelectRow } from '../components/ui.jsx'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import { isWarmupRow } from '../lib/workout-model.js'
+import { weightSeries, bodyweightKgOf } from '../lib/bodyweight.js'
 
 // Set 1 to 5 on the per-set chart — system colours, so each line keeps its hue in dark mode.
 const SET_COLORS = ['var(--blue)', 'var(--green)', 'var(--orange)', 'var(--purple)', 'var(--pink)']
@@ -56,13 +57,7 @@ function latestMuscleTraining(workouts) {
   return latest
 }
 
-export const FATIGUE_LEVELS = [
-  { at: 0, level: 0 },
-  { at: 0.15, level: 1 },
-  { at: 0.25, level: 2 },
-  { at: 0.4, level: 3 },
-  { at: 0.55, level: 4, exclusive: true },
-]
+export { FATIGUE_LEVELS }
 
 export const STRENGTH_LEVELS = [
   { at: STRENGTH_FLOOR, level: 0 },
@@ -112,16 +107,6 @@ function fatigueLabel(value) {
   return t(state === 'ready' ? 'Ready' : state === 'recovering' ? 'Recovering' : 'Fatigued')
 }
 
-// The user's own last registered bodyweight, in kg: the body-mass part of a bodyweight
-// exercise's load for fatigue and for estimated effort, so both read the same set the same way.
-function profileBodyweightKg(S) {
-  const entries = S.bodyweight || []
-  if (!entries.length) return null
-  const last = entries.slice().sort((a, b) => String(a.d).localeCompare(String(b.d))).at(-1)
-  if (!last || !(last.w > 0)) return null
-  return S.unit === 'lb' ? last.w * LB_TO_KG : last.w
-}
-
 function MuscleBalance({ S }) {
   const [view, setView] = useState('balance')
   const [win, setWin] = useState(7)
@@ -132,7 +117,7 @@ function MuscleBalance({ S }) {
   const now = useNow()
   const lang = getLang()
   const workouts = S.workouts
-  const bodyweightKg = useMemo(() => profileBodyweightKg(S), [S.bodyweight, S.unit])
+  const bodyweightKg = useMemo(() => bodyweightKgOf(S), [S.bodyweight, S.unit])
   const fatigue = useMemo(() => fatigueOf(workouts, now, { bodyweightKg, unit: S.unit }), [workouts, now, bodyweightKg, S.unit])
   const strength = useMemo(() => strengthOf(workouts, now, { bodyweightKg, unit: S.unit }), [workouts, now, bodyweightKg, S.unit])
   const muscleExercises = useMemo(() => (sel ? strengthExerciseRowsForMuscle(S, now, sel) : []), [S, now, sel, lang])
@@ -322,7 +307,7 @@ function EffortCard({ S }) {
   const blend = logged.rated < MIN_RATED
   // Same options as the fatigue map (unit + profile bodyweight), so a bodyweight set is
   // estimated against the same body-mass-inclusive anchor in both places.
-  const opts = useMemo(() => ({ unit: S.unit, bodyweightKg: profileBodyweightKg(S) }), [S.unit, S.bodyweight])
+  const opts = useMemo(() => ({ unit: S.unit, bodyweightKg: bodyweightKgOf(S) }), [S.unit, S.bodyweight])
   const anchors = useMemo(
     () => (blend ? anchorsByWorkout(S.workouts, opts) : new Map()),
     [blend, S.workouts, opts],
@@ -427,10 +412,9 @@ export default function Stats() {
   const kind = displayScale(S)
   const hd = scaleName(kind)
 
-  const bwPts = S.bodyweight.filter(b => range === 0 || (b.t || new Date(b.d).getTime()) > now - range * 86400000)
-    .map(b => ({ t: b.t || new Date(b.d).getTime(), y: b.w, d: b.d }))
-  const bw30 = S.bodyweight.filter(b => (b.t || new Date(b.d).getTime()) > now - 30 * 86400000)
-  const bwDelta30 = bw30.length > 1 ? bw30[bw30.length - 1].w - bw30[0].w : null
+  const bwPts = weightSeries(S.bodyweight, range === 0 ? 0 : now - range * 86400000)
+  const bw30 = weightSeries(S.bodyweight, now - 30 * 86400000)
+  const bwDelta30 = bw30.length > 1 ? bw30[bw30.length - 1].y - bw30[0].y : null
   const workouts = S.workouts
   const monthW = workouts.filter(w => workoutDay(w)?.slice(0, 7) === todayISO().slice(0, 7)).length
 

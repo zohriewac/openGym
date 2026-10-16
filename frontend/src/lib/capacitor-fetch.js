@@ -12,6 +12,21 @@
 // Only the subset the adapters use is implemented: method, headers, a JSON body, an abort
 // signal, and a response with ok/status/text()/json().
 export async function nativeFetch(url, init = {}) {
+  // The bare SwiftUI shell (OpenGym/) has no Capacitor but answers HTTP itself (HttpBridge.swift).
+  const bridge = typeof window !== 'undefined' && window.webkit?.messageHandlers?.http
+  if (bridge) {
+    const request = bridge.postMessage({
+      url, method: init.method || 'GET', headers: init.headers || {},
+      body: typeof init.body === 'string' ? init.body : null, timeout: 40 * 60
+    })
+    const res = await (init.signal ? Promise.race([request, abortOf(init.signal)]) : request)
+    return {
+      ok: res.status >= 200 && res.status < 300,
+      status: res.status,
+      text: async () => res.body,
+      json: async () => JSON.parse(res.body)
+    }
+  }
   let cap = null
   try { cap = await import('@capacitor/core') } catch { /* not a Capacitor build */ }
   if (!cap || !cap.Capacitor || !cap.Capacitor.isNativePlatform()) return fetch(url, init)

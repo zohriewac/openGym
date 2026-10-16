@@ -1689,6 +1689,18 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .mchip.miss{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
 
 /* --- stat tiles --- */
+/* Home dashboard */
+.dash-hero{background:linear-gradient(160deg,color-mix(in srgb,var(--acc) 14%,var(--surface)) 0%,var(--surface) 60%)}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.dash-grid .card{margin:0;min-height:44px}
+.dash-num{font-size:26px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;line-height:1.1}
+.dash-bar{height:6px;border-radius:3px;background:var(--acc)}
+.dash-bar.prev{background:var(--surface-3)}
+.weekgrid rect.on{fill:var(--acc)} .weekgrid rect.off{fill:var(--surface-3)}
+.dash-bm{max-width:140px}
+.dash-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+@media (prefers-reduced-motion:no-preference){.dash-grid .card,.dash-card{animation:dash-in var(--med) var(--ease) both}}
+@keyframes dash-in{from{opacity:0}to{opacity:1}}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .tile{background:var(--surface);border-radius:var(--r-card);padding:14px}
 .tile .l{

@@ -41,3 +41,16 @@ describe('native Coach transport timeouts', () => {
     }))
   })
 })
+
+describe('the SwiftUI shell transport', () => {
+  it('sends the call through the native http handler and shapes the reply like a fetch response', async () => {
+    const post = vi.fn(async () => ({ status: 200, body: '{"ok":true}' }))
+    vi.stubGlobal('window', { webkit: { messageHandlers: { http: { postMessage: post } } } })
+    try {
+      const res = await nativeFetch('https://api.example.test/v1/x', { method: 'POST', headers: { a: 'b' }, body: '{"q":1}' })
+      expect(post).toHaveBeenCalledWith(expect.objectContaining({ url: 'https://api.example.test/v1/x', method: 'POST', headers: { a: 'b' }, body: '{"q":1}' }))
+      expect(res.ok).toBe(true)
+      expect(await res.json()).toEqual({ ok: true })
+    } finally { vi.unstubAllGlobals() }
+  })
+})

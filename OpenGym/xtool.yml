@@ -1,0 +1,10 @@
+version: 1
+bundleID: com.zohriewac.opengym
+iconPath: icon.png
+entitlementsPath: OpenGym.entitlements
+infoPath: Info.plist
+product: OpenGym
+extensions:
+  - product: OpenGymWidget
+    infoPath: OpenGymWidget-Info.plist
+    entitlementsPath: OpenGymWidget.entitlements

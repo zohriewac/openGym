@@ -47,7 +47,7 @@ const HISTORY_MAX = 20;
 
 const safe = uid => String(uid).replace(/[^a-zA-Z0-9_-]/g, '');
 const userFile = uid => path.join(COACH_DIR, safe(uid) + '.json');
-const EMPTY = { daily: null, current: null, pending: null, history: [] };
+const EMPTY = { current: null, pending: null, history: [] };
 
 export function readUser(uid) {
   try { return { ...EMPTY, ...JSON.parse(fs.readFileSync(userFile(uid), 'utf8')) }; }
@@ -65,16 +65,11 @@ function patchUser(uid, patch) {
   return rec;
 }
 /** Consent revoked, profile deleted, "reset everything" — no server-side residue (FR-51).
- *  Today's job count is the one thing that stays: it is the spending record the daily cap
- *  reads, not the profile's data, and forgetting must not hand out a fresh cap; the record
- *  outlives the day only until the next job or forget touches it, and counts for nothing once
- *  the date has passed. A job still waiting in the queue is dropped here; one already mid-call
+ *  A job still waiting in the queue is dropped here; one already mid-call
  *  is cancelled where the adapter can be (the HTTP ones — a spawned runtime runs to its end),
  *  and either way finishes without writing anything back (see finish). */
 export function clearUser(uid) {
-  const { daily } = readUser(uid);
   try { fs.unlinkSync(userFile(uid)); } catch { /* nothing to clear */ }
-  if (daily?.date === todayISO()) writeUser(uid, { ...EMPTY, daily });
   const queued = queue.findIndex(j => j.uid === uid);
   if (queued >= 0) { queue.splice(queued, 1); inflight.delete(uid); }
   aborts.get(uid)?.abort();
@@ -108,19 +103,6 @@ export function readState(uid) {
 /* ---------- caps ---------- */
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
-function bumpDaily(uid) {
-  const rec = readUser(uid);
-  const d = todayISO();
-  const daily = rec.daily?.date === d ? { date: d, count: rec.daily.count + 1 } : { date: d, count: 1 };
-  patchUser(uid, { daily });
-  return daily.count;
-}
-export function capState(uid) {
-  const caps = cfgStore.load().caps || {};
-  const rec = readUser(uid);
-  const used = rec.daily?.date === todayISO() ? rec.daily.count : 0;
-  return { used, limit: caps.perProfileDaily || 0 };
-}
 // The instance-wide count is kept the same way in coach.json, not read off the job log: the
 // log keeps its last hundred entries, and a count that stops at a hundred is not a cap.
 function bumpInstanceDaily() {
@@ -140,14 +122,11 @@ export function status(uid) {
   const rec = readUser(uid);
   if (rec.pending && rec.pending.expiresAt && rec.pending.expiresAt < Date.now()) {
     archive(uid, rec, 'expired');
-    // Same shape as every other answer: the poll that happens to be the one which expires a
-    // proposal must not be the one where the client's cap readout goes undefined.
-    return { job: null, pending: null, cap: capState(uid) };
+    return { job: null, pending: null };
   }
   return {
     job: rec.current ? { id: rec.current.id, kind: rec.current.kind, state: rec.current.state, startedAt: rec.current.startedAt } : null,
     pending: rec.pending || null,
-    cap: capState(uid),
     // How the most recent job ended, so the chat can say "nothing to change" or "that failed"
     // in the Coach's own bubble rather than leaving a job that silently stopped appearing.
     last: lastOutcome(rec)
@@ -225,14 +204,10 @@ export function enqueue(uid, opts) {
   }
 
   const caps = cfgStore.load().caps || {};
-  const { used, limit } = capState(uid);
-  if (limit > 0 && used >= limit) throw new CoachError('cap', 'daily limit reached');
   if (caps.instanceDaily > 0 && instanceUsedToday() >= caps.instanceDaily) throw new CoachError('cap', 'this instance has reached its daily limit');
 
-  // Counted at enqueue, not at completion: the cap exists to bound what one profile can spend
-  // of the owner's provider account, and queueing twenty jobs spends it whether or not the
-  // twentieth ever finishes.
-  bumpDaily(uid);
+  // Counted at enqueue, not at completion: the instance cap bounds what the owner's provider
+  // account can spend, and queueing twenty jobs spends it whether or not the twentieth finishes.
   bumpInstanceDaily();
 
   const job = {

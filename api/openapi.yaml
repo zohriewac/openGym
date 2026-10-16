@@ -2727,9 +2727,6 @@ paths:
         for a sync to carry the news. A job already running is cancelled where the adapter
         allows it and writes nothing back either way.
 
-        Today's job count is the one thing that survives. It is the spending record the
-        daily cap reads, and forgetting must not hand out a fresh cap.
-
         Needs a session only: a profile must be able to be forgotten on an instance whose
         Coach has since been switched off.
       responses:
@@ -2792,14 +2789,13 @@ paths:
                 caps:
                   type: object
                   properties:
-                    perProfileDaily: { type: integer, minimum: 0, maximum: 200, description: 0 = no cap. }
                     instanceDaily: { type: integer, minimum: 0, maximum: 5000, description: 0 = no cap. }
                 maxMessageLen:
                   type: integer
                   minimum: 200
                   maximum: 4000
                   description: How long a chat message, refinement or review note can be. Clamped into the range; not a number keeps the current value.
-            example: { enabled: true, provider: compatible, model: qwen3.8-27b, caps: { perProfileDaily: 10, instanceDaily: 0 } }
+            example: { enabled: true, provider: compatible, model: qwen3.8-27b, caps: { instanceDaily: 0 } }
       responses:
         '200':
           description: Saved.
@@ -2876,6 +2872,33 @@ paths:
                     items: { type: string }
                   error: { type: string }
               example: { ok: true, models: [qwen3.8-27b, gpt-oss-120b] }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/coach/balance:
+    post:
+      tags: [admin, coach]
+      operationId: postAdminCoachBalance
+      summary: 'Admin: credit left on the provider account'
+      description: >-
+        Asked fresh from the provider on every call (OpenRouter only). `scope: account` is the
+        account total (management key); `scope: key` is the stored key's own limit, where a
+        `null` limit/remaining means the key is uncapped. Other providers answer `ok: false`.
+      responses:
+        '200':
+          description: The balance, or why there is none.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  scope: { type: string, enum: [account, key] }
+                  remaining: { type: number, nullable: true }
+                  used: { type: number }
+                  limit: { type: number, nullable: true }
+                  error: { type: string }
+              example: { ok: true, scope: account, remaining: 74.75, used: 25.75, limit: 100.5 }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 
@@ -3021,7 +3044,7 @@ components:
 
         - `busy` (409): a job for this profile is already running.
         - `shared` (409): instance mode, and the credential belongs to another profile.
-        - `cap` (429): this profile's or the instance's daily limit is spent.
+        - `cap` (429): the instance's daily limit is spent.
         - `consent` (403): no consent recorded for this profile.
         - `unprivileged` (503): the privilege drop cannot be performed, so no job runs.
 
@@ -3668,13 +3691,6 @@ components:
         name: Ada
 
     # ------------------------------------------------------------------ AI Coach
-    CoachCap:
-      type: object
-      description: What this profile has spent of its daily allowance.
-      properties:
-        used: { type: integer }
-        limit: { type: integer, description: 0 means no per-profile cap. }
-
     CoachStatus:
       type: object
       properties:
@@ -3692,7 +3708,6 @@ components:
           oneOf:
             - $ref: '#/components/schemas/CoachProposal'
             - type: 'null'
-        cap: { $ref: '#/components/schemas/CoachCap' }
         maxMessageLen:
           type: integer
           minimum: 200
@@ -3861,7 +3876,6 @@ components:
         caps:
           type: object
           properties:
-            perProfileDaily: { type: integer }
             instanceDaily: { type: integer }
         maxMessageLen: { type: integer, description: 'How long a chat message, refinement or review note can be (200–4000, default 1000).' }
         community: { type: boolean }

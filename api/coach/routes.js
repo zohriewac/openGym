@@ -17,7 +17,7 @@ import { validateBaseUrl, validateHeaders, baseUrlFor } from './core/providers.j
 const USER_ERROR = {
   off: 'the Coach is not set up on this instance',
   busy: 'the Coach is already thinking about your training',
-  cap: 'the Coach is taking a rest day, try again tomorrow',
+  cap: 'the Coach has reached this instance’s daily limit, try again tomorrow',
   consent: 'the Coach needs your go-ahead first',
   // Verbatim, because it tells the user the one thing that resolves it and names who resolves
   // it. A vaguer message here turns into a support question for the person running the box.
@@ -158,7 +158,7 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
           id, label: p.label, runtime: p.runtime,
           setupToken: !!p.setupToken, deviceLogin: !!p.deviceLogin, apiKey: !!p.apiKeyEnv,
           http: !!p.http, baseUrl: !!p.baseUrl, keyOptional: !!p.keyOptional, keyPlaceholder: p.keyPlaceholder || null,
-          defaultModel: p.defaultModel || null,
+          defaultModel: p.defaultModel || null, balance: !!p.balance,
           // Which providers already hold a key — so switching chips is visibly not a reset.
           connected: !!(cfgStore.authFor(cfg, id) && cfgStore.authFor(cfg, id).data)
         })),
@@ -243,10 +243,10 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
       }
       if (body.community !== undefined) patch.community = !!body.community;
       if (body.caps) {
-        patch.caps = {
-          perProfileDaily: Math.max(0, Math.min(200, +body.caps.perProfileDaily || 0)),
-          instanceDaily: Math.max(0, Math.min(5000, +body.caps.instanceDaily || 0))
-        };
+        // A non-number must not coerce to 0: 0 means "no cap", so a typo would switch the cap off.
+        const n = body.caps.instanceDaily;
+        if (typeof n !== 'number' || !Number.isFinite(n)) return json(res, 400, { error: 'instanceDaily must be a number' });
+        patch.caps = { instanceDaily: Math.max(0, Math.min(5000, Math.floor(n))) };
       }
       if (body.maxMessageLen !== undefined) {
         patch.maxMessageLen = Math.max(
@@ -280,6 +280,17 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
       const cred = cfgStore.credentialFor(cfgStore.boundUidFor(cfg));
       const env = cfgStore.jobEnv(process.env.TMPDIR || '/tmp', cred.ok ? cred : undefined);
       json(res, 200, await adapter.models(cfg, env));
+    },
+
+    /* Credit left on the provider account (OpenRouter), asked fresh on every call. */
+    'POST /api/admin/coach/balance': async (req, res) => {
+      if (!requireAdmin(req, res)) return;
+      const cfg = cfgStore.load();
+      const adapter = adapterFor(cfg.provider);
+      if (!adapter || typeof adapter.balance !== 'function') return json(res, 200, { ok: false, error: 'this provider does not report a balance' });
+      const cred = cfgStore.credentialFor(cfgStore.boundUidFor(cfg));
+      const env = cfgStore.jobEnv(process.env.TMPDIR || '/tmp', cred.ok ? cred : undefined);
+      json(res, 200, await adapter.balance(cfg, env));
     },
 
     /* Connect the instance credential. Deferred while the fixture was the only provider — it
