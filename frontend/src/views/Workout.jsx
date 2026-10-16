@@ -64,13 +64,13 @@ function StartChooser() {
   const todayOvr = S.dayPlan[todayISO()] !== undefined && pinState(S, S.dayPlan[todayISO()]) !== 'done' // a fulfilled pin is no override
   const idSet = new Set(todayIds)
   const others = S.routines.filter(r => !idSet.has(r.id))
-  return <div className="narrow">
+  return <div className="narrow start-chooser">
     <div className="hdr"><div><h1>{t('Start workout')}</h1><div className="sub">{t(DAYN[new Date().getDay()])} · {todayRoutines.length ? t('today is {0}', todayName) : t('rest day, but no one’s stopping you')}</div></div></div>
-    {todayRoutines.length > 0 && <div className="card" style={{ borderColor: 'var(--acc)' }}>
+    {todayRoutines.length > 0 && <div className="card sc-hero">
       <h2 className="accent">{t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}</h2>
-      <div className="row between" style={{ marginBottom: 12 }}>
+      <div className="row between sc-hero-body">
         <div><div className="big">{todayName}</div><div className="muted small">{exCount(todayRoutines.reduce((n, r) => n + r.ex.length, 0))}</div></div>
-        <span className="lrow-i" style={{ width: 38, height: 38, borderRadius: 9, fontSize: 22 }}><Icon name={glyphOf(todayRoutines[0].emoji)} /></span>
+        <span className="lrow-i sc-hero-i"><Icon name={glyphOf(todayRoutines[0].emoji)} /></span>
       </div>
       <Button variant="primary" icon="play" onClick={() => startFlow(todayIds)}>{t('Start {0}', todayName)}</Button>
     </div>}
@@ -79,9 +79,10 @@ function StartChooser() {
         <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
         <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
         <span className="tag acc">{t('Start')}</span></div>)}</div></>}
-    <div style={{ height: 14 }} />
-    <Button icon="shuffle" onClick={() => startFlow([])}>{t('Freestyle workout (pick as you go)')}</Button>
-    {!S.routines.length && <><div style={{ height: 10 }} /><Button variant="primary" onClick={() => nav('/plan')}>{t('Build a plan first')}</Button></>}
+    <div className="sc-secondary">
+      <Button icon="shuffle" onClick={() => startFlow([])}>{t('Freestyle workout (pick as you go)')}</Button>
+      {!S.routines.length && <Button variant="primary" onClick={() => nav('/plan')}>{t('Build a plan first')}</Button>}
+    </div>
   </div>
 }
 
@@ -1937,12 +1938,12 @@ function ActiveWorkout() {
       {editing
         ? <button className="iconbtn" aria-label={t('Close editor')} title={t('Close editor')} onClick={() => exitWorkoutEdit()}><Icon name="xmark" /></button>
         : <button className="iconbtn" aria-label={t('Minimize')} title={t('Minimize')} onClick={() => nav('/home')}><Icon name="chevronDown" /></button>}
-      <div className="whdr-mid"><div className="whdr-name">{A.name}</div><div className="sub">{(A.backfill || editing) ? fmtDate(A.d, true) : <Elapsed start={A.start} />} · {t('{0} sets', done + '/' + total)}</div></div>
+      <div className="whdr-mid"><div className="whdr-name">{A.name}</div><div className="sub">{(A.backfill || editing) ? fmtDate(A.d, true) : <b className="whdr-clock"><Elapsed start={A.start} /></b>} ·{t('{0} sets', done + '/' + total)}</div></div>
       <button className="iconbtn" aria-label={t('Workout options')} title={t('Workout options')} onClick={openViewMenu}><Icon name="more" /></button>
       <button className="btn primary pill whdr-finish" aria-label={editing ? t('Save changes') : undefined}
         onClick={() => (editing ? finishWorkout() : finishWorkoutSheet({ onDiscard: discardWorkout }))}>{editing ? t('Save') : t('Finish')}</button>
     </div>
-    <div className="wprog"><i style={{ width: (total ? done / total * 100 : 0) + '%' }} /></div>
+    <div className="wprog" role="progressbar" aria-label={t('{0} sets', done + '/' + total)} aria-valuemin={0} aria-valuemax={total} aria-valuenow={done}><i style={{ transform: 'scaleX(' + (total ? Math.min(1, done / total) : 0) + ')' }} /></div>
     {/* In the list the chips ride in the pinned header, so any exercise is one tap away from
         anywhere in a long stack. */}
     {listMode && chipRow}
