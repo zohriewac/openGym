@@ -134,7 +134,7 @@ export default function Home() {
       <button className="iconbtn" onClick={() => nav('/settings')} aria-label={trouble ? t('Settings') + ', ' + t('Connection problem') : t('Settings')}><Icon name="gear" />{trouble && <span className="tab-dot" aria-hidden="true" />}</button>
     </div>
 
-    <div className="card dash-hero">
+    <div className="card dash-hero home-hero">
       {/* Once today's session is logged the row stops asking for it. The week strip already
           knew (its dot goes 'done'); this row did not, so a finished day kept showing the
           routine name behind a green Start tag and read as still outstanding (issue #4).
@@ -185,46 +185,28 @@ export default function Home() {
         </Button>
       </div>}
     </div>
-
-    {/* Jump to the gym check-in cards (QR membership codes). Shown here as a quick tap on
-        arrival at the gym; folds away per user via the "Gym check-in" switch in Settings. */}
-    {S.checkIn !== false && (
-      <div className="card tappable" style={{ cursor: 'pointer' }} {...tappable(() => nav('/checkin'))}>
-        <div className="row between">
-          <div className="row" style={{ gap: 9 }}>
-            <span className="lrow-i" style={{ background: 'var(--blue)' }}><Icon name="qr" /></span>
-            <div>
-              <div className="lbl2">{t('At the gym')}</div>
-              <div className="ttl">{t('Check in')}</div>
-            </div>
-          </div>
-          <Icon name="chevronRight" className="chev" />
-        </div>
-      </div>
-    )}
+    {/* slot: WeekSummary */}
 
     {!S.routines.length && !S.active && (
-      <div className="card">
-        <div className="row" style={{ gap: 10, marginBottom: 6 }}>
-          <span className="lrow-i"><Icon name="calendar" /></span>
-          <div className="big" style={{ fontSize: 22 }}>{t('Welcome!')}</div>
-        </div>
-        <div className="muted small" style={{ marginBottom: 12 }}>{t('Set up your weekly routine to get going, or grab a ready-made starter plan.')}</div>
+      <div className="card home-welcome">
+        <span className="lrow-i"><Icon name="calendar" /></span>
+        <h2 className="home-welcome-h">{t('Welcome!')}</h2>
+        <div className="muted small">{t('Set up your weekly routine to get going, or grab a ready-made starter plan.')}</div>
         <Button variant="primary" icon="clipboard" onClick={starterPlanSheet}>{t('Load starter plan')}</Button>
-        <div style={{ height: 8 }} /><Button onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
+        <Button variant="ghost" onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
       </div>
     )}
 
     {hasHistory && <>
       <div className="dash-grid">
-        <div className="card tappable" {...tappable(() => calendarSheet())}>
+        <div className="card tappable home-sec" {...tappable(() => calendarSheet())}>
           <div className="row" style={{ gap: 10 }}>
             <Ring value={doneThisWeek} max={plannedPerWeek || doneThisWeek || 1} label={`${doneThisWeek}${plannedPerWeek ? ' / ' + plannedPerWeek : ''} ${t('this week')}`} />
             <div className="muted small">{doneThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')} · {tn('{0} workout total', '{0} workouts total', S.workouts.length)}</div>
           </div>
           <div className="row small muted" style={{ gap: 5, marginTop: 8 }}><Icon name="flame" style={{ color: 'var(--label-2)' }} />{t('{0} week streak', streakWeeks(S))}</div>
         </div>
-        <div className="card tappable" {...tappable(() => nav('/stats'))}>
+        <div className="card tappable home-sec" {...tappable(() => nav('/stats'))}>
           <div className="lbl2">{t('Volume')}</div>
           <div className="dash-num">{fmtVol(vol.cur, S.unit)}</div>
           <div className="small muted" style={{ marginTop: 6 }}>{t('This week')}</div>
@@ -235,12 +217,12 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="card tappable dash-card" {...tappable(() => calendarSheet())}>
+      <div className="card tappable dash-card home-sec" {...tappable(() => calendarSheet())}>
         <WeekGrid days={grid.days} label={t('Trained {0} of the last {1} weeks', grid.weeksTrained, 12)} />
         <div className="muted small" style={{ marginTop: 6 }}>{t('Trained {0} of the last {1} weeks', grid.weeksTrained, 12)}</div>
       </div>
 
-      {lifts.length > 0 && <div className="card tappable dash-card" {...tappable(() => nav('/stats'))}>
+      {lifts.length > 0 && <div className="card tappable dash-card home-sec" {...tappable(() => nav('/stats'))}>
         <h2 style={{ marginTop: 0 }}>{t('Strength')}</h2>
         {lifts.map(l => <div key={l.exId} className="row between" style={{ gap: 10, padding: '6px 0' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -256,7 +238,7 @@ export default function Home() {
         </>}
       </div>}
 
-      <div className="card tappable dash-card" {...tappable(() => nav('/stats'))}>
+      <div className="card tappable dash-card home-sec" {...tappable(() => nav('/stats'))}>
         <h2 style={{ marginTop: 0 }}>{t('Recovery')}</h2>
         <div className="row" style={{ gap: 12, alignItems: 'center' }}>
           <BodyMap className="dash-bm hm-fatigue" load={fatigue} thresholds={FATIGUE_LEVELS} body={S.body} />
@@ -270,7 +252,7 @@ export default function Home() {
       </div>
     </>}
 
-    {S.showWeightCard !== false && <div className="card">
+    {S.showWeightCard !== false && <div className="card home-sec">
       <div className="row between bw-head" style={{ marginBottom: 6 }}>
         <h2 style={{ margin: 0 }}>{t('Body weight')}</h2>
         <div className="row" style={{ gap: 8 }}>
@@ -315,5 +297,21 @@ export default function Home() {
         : t("No weigh-ins yet. Log your weight to start the curve (we also ask before every workout).")}</div>}
     </div>}
 
+    {/* Jump to the gym check-in cards (QR membership codes). Shown here as a quick tap on
+        arrival at the gym; folds away per user via the "Gym check-in" switch in Settings. */}
+    {S.checkIn !== false && (
+      <div className="card tappable home-sec" style={{ cursor: 'pointer' }} {...tappable(() => nav('/checkin'))}>
+        <div className="row between">
+          <div className="row" style={{ gap: 9 }}>
+            <span className="lrow-i" style={{ background: 'var(--blue)' }}><Icon name="qr" /></span>
+            <div>
+              <div className="lbl2">{t('At the gym')}</div>
+              <div className="ttl">{t('Check in')}</div>
+            </div>
+          </div>
+          <Icon name="chevronRight" className="chev" />
+        </div>
+      </div>
+    )}
   </div>
 }
