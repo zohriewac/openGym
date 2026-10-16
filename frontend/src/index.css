@@ -51,10 +51,13 @@
   /* geometry */
   --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px; --r-card:14px;
   --pad:16px;
+  --fs-xs:11px; --fs-sm:13px; --fs-md:15px; --fs-lg:17px; --fs-xl:20px; --fs-2xl:28px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px;
   --icon-stroke:1.7;
 
   /* motion */
   --ease:cubic-bezier(.32,.72,0,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
   --fast:140ms; --med:220ms;
 
   /* The system bars the page is drawn under. env() is all a browser and the iOS app give; the
@@ -122,7 +125,7 @@ html{
 body{
   background:var(--bg);color:var(--label);
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',Roboto,system-ui,sans-serif;
-  font-size:17px;line-height:1.29;letter-spacing:-.01em;
+  font-size:var(--fs-lg);line-height:1.29;letter-spacing:-.01em;
   min-height:100vh;min-height:100dvh;overscroll-behavior-y:none;overflow-x:clip;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   touch-action:manipulation;
@@ -153,7 +156,7 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
    render, which is a design call and not a cleanup. `git log -- src/index.css` has them. */
 
 .muted{color:var(--label-2)} .dim{color:var(--label-3)}
-.small{font-size:13px;line-height:1.38}
+.small{font-size:var(--fs-sm);line-height:1.38}
 .accent{color:var(--acc)}
 .capitalize{text-transform:capitalize}
 /* exercise names and body-part/equipment terms arrive lowercase from the dataset,
@@ -196,20 +199,20 @@ body.no-tabbar.resting #app{padding-bottom:calc(96px + var(--sab))}
 .conn-row{max-width:560px;margin:0 auto;padding:6px 0}
 .conn{
   display:flex;align-items:center;gap:9px;width:100%;text-align:start;min-height:34px;
-  padding-block:6px;padding-inline:12px 8px;border-radius:var(--r);
-  background:color-mix(in srgb,var(--yellow) 16%,var(--surface));color:var(--label);font-size:13px;line-height:1.3;
+  padding-block:6px;padding-inline:var(--sp-3) var(--sp-2);border-radius:var(--r);
+  background:color-mix(in srgb,var(--yellow) 16%,var(--surface));color:var(--label);font-size:var(--fs-sm);line-height:1.3;
 }
 .conn .icn{flex:none;font-size:16px;color:var(--label-2)}
 .conn-t{flex:1;min-width:0;overflow-wrap:break-word}
-.conn-a{flex:none;padding:4px 10px;border-radius:99px;background:var(--surface-3);font-weight:600;white-space:nowrap}
+.conn-a{flex:none;padding:var(--sp-1) 10px;border-radius:99px;background:var(--surface-3);font-weight:600;white-space:nowrap}
 button.conn:active{filter:brightness(1.12)}
 .conn-bar.off .conn{background:color-mix(in srgb,var(--label-3) 18%,var(--surface))}
 .conn-bar.bad .conn{background:color-mix(in srgb,var(--red) 16%,var(--surface))}
 .conn-bar.bad .conn .icn{color:var(--red)}
 /* a deliberate local setup: said, not flagged — one small line, no fill */
-.conn-bar.quiet .conn-row{padding:2px 0 4px}
-.conn-bar.quiet .conn{min-height:26px;padding-block:2px;padding-inline:4px 2px;background:none;color:var(--label-2);font-size:12px;gap:6px}
-.conn-bar.quiet .conn .icn{font-size:13px;color:var(--label-3)}
+.conn-bar.quiet .conn-row{padding:2px 0 var(--sp-1)}
+.conn-bar.quiet .conn{min-height:26px;padding-block:2px;padding-inline:var(--sp-1) 2px;background:none;color:var(--label-2);font-size:12px;gap:6px}
+.conn-bar.quiet .conn .icn{font-size:var(--fs-sm);color:var(--label-3)}
 .conn-bar.quiet .conn-a{padding:2px 9px;font-size:12px;color:var(--acc);background:var(--acc-soft)}
 /* its × (#454): beside the line, not inside its button, so hiding it never also connects */
 .conn-bar.quiet .conn-row{display:flex;align-items:center;gap:2px}
@@ -220,7 +223,7 @@ button.conn:active{filter:brightness(1.12)}
   .conn-bar{background:var(--bg)}
 }
 /* large title, the way a nav bar does it */
-.hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:8px 0 18px}
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-3);margin:8px 0 18px}
 /* The title block gives way, the button on the right never does: a flex item will not shrink
    below its longest word, so "Упражнения" at 34px or "Hi Bartholomew_Jones" used to push the
    gear / "By muscle" past the screen edge. Two things follow from letting it shrink. Below 420px
@@ -234,10 +237,10 @@ button.conn:active{filter:brightness(1.12)}
    a box this tight, and that is what turned "Упражнения" into "Упра / жнен / ия". */
 .hdr>div{min-width:0}
 .hdr>.btn{flex:none}
-.hdr>.hdr-actions{display:flex;align-items:center;gap:8px;flex:none}
+.hdr>.hdr-actions{display:flex;align-items:center;gap:var(--sp-2);flex:none}
 .hdr h1{font-size:34px;line-height:1.06;font-weight:700;letter-spacing:-.028em;overflow-wrap:break-word}
 @media (max-width:420px){.hdr h1{font-size:30px}}
-.hdr .sub{color:var(--label-2);font-size:15px;letter-spacing:-.006em;margin-top:4px}
+.hdr .sub{color:var(--label-2);font-size:var(--fs-md);letter-spacing:-.006em;margin-top:4px}
 /* Library: the count line runs under the title row at full width instead of beside the "By muscle"
    button, which left it ~200px on a phone: the catalogue count plus your own exercises stays one
    line in every language. The ellipsis is only the safety net (the strings are kept short), and
@@ -264,40 +267,40 @@ button.conn:active{filter:brightness(1.12)}
 .iconbtn:disabled{opacity:.32}
 
 h4.sec{
-  font-size:13px;font-weight:400;letter-spacing:-.004em;color:var(--label-2);
-  text-transform:none;margin:22px 0 8px;padding:0 4px;
+  font-size:var(--fs-sm);font-weight:400;letter-spacing:-.004em;color:var(--label-2);
+  text-transform:none;margin:22px 0 8px;padding:0 var(--sp-1);
 }
 .card h2{
-  font-size:13px;font-weight:400;letter-spacing:-.004em;color:var(--label-2);
+  font-size:var(--fs-sm);font-weight:400;letter-spacing:-.004em;color:var(--label-2);
   text-transform:none;margin:0 0 12px;
 }
 .divider{height:var(--hair);background:var(--sep);margin:14px 0;border:0}
-.row{display:flex;align-items:center;gap:12px}
+.row{display:flex;align-items:center;gap:var(--sp-3)}
 .row.between{justify-content:space-between}
 /* The body-weight card header (Home and Stats): title on the left, Goal + Log on the right. In
    German the title and the two buttons ("Ziel", "+ Eintragen") outgrow a 320px card by about
    55px, so the button pair may drop to a second line — still flush right, hence the auto margin. */
-.bw-head{flex-wrap:wrap;row-gap:8px}
+.bw-head{flex-wrap:wrap;row-gap:var(--sp-2)}
 .bw-head>.row{margin-inline-start:auto}
 
 /* ----------------------------------------------------------------- card -- */
 .card{
-  background:var(--surface);border-radius:var(--r-card);
-  padding:16px;margin-bottom:12px;
+  background:var(--surface);border-radius:var(--r-lg);
+  padding:var(--sp-4);margin-bottom:var(--sp-3);
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
 
 /* ------------------------------------------------------ inset group list -- */
 .sect{margin-bottom:22px}
 .sect-t{
-  font-size:13px;font-weight:400;color:var(--label-2);
-  letter-spacing:-.004em;padding:0 4px 7px;display:block;
+  font-size:var(--fs-sm);font-weight:400;color:var(--label-2);
+  letter-spacing:-.004em;padding:0 var(--sp-1) 7px;display:block;
 }
 .sect-b{background:var(--surface);border-radius:var(--r-card);overflow:hidden}
-.sect-f{font-size:13px;color:var(--label-2);padding:7px 4px 0;line-height:1.38}
+.sect-f{font-size:var(--fs-sm);color:var(--label-2);padding:7px var(--sp-1) 0;line-height:1.38}
 
 .lrow{
-  display:flex;align-items:center;gap:12px;width:100%;text-align: start;
+  display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align: start;
   padding:11px 14px;min-height:46px;position:relative;color:var(--label);
   background:none;
 }
@@ -322,8 +325,8 @@ h4.sec{
    did not already owe the title. .lrow-t does not ellipsise on purpose — long settings titles wrap
    onto a second line — and the value next to it shrinks and ellipsises instead (below). */
 .lrow-m{flex:1;min-width:auto;display:flex;flex-direction:column;gap:1px}
-.lrow-t{font-size:17px;letter-spacing:-.012em;line-height:1.25}
-.lrow-s{font-size:13px;color:var(--label-2);line-height:1.3}
+.lrow-t{font-size:var(--fs-lg);letter-spacing:-.012em;line-height:1.25}
+.lrow-s{font-size:var(--fs-sm);color:var(--label-2);line-height:1.3}
 /* Settings → Account ID: a machine string, so a machine face, small, and free to break anywhere
    rather than push the row past a phone's edge. */
 .acct-id{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}
@@ -334,10 +337,10 @@ h4.sec{
    none of the shrink — a long value would otherwise take the whole row and squeeze the title
    to 21px. A basis of 45% fixes that but reserves the space even for "3", costing the title
    141px on the rows that need it most. A cap does neither. */
-.lrow-v{color:var(--label-2);font-size:17px;letter-spacing:-.012em;flex:0 1 auto;max-width:55%;min-width:0;
+.lrow-v{color:var(--label-2);font-size:var(--fs-lg);letter-spacing:-.012em;flex:0 1 auto;max-width:55%;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align: end}
-.lrow-c{color:var(--label);font-size:15px;flex:none;--icon-stroke:2.4}
-.lrow-k{color:var(--acc);font-size:17px;flex:none;--icon-stroke:2.4}
+.lrow-c{color:var(--label);font-size:var(--fs-md);flex:none;--icon-stroke:2.4}
+.lrow-k{color:var(--acc);font-size:var(--fs-lg);flex:none;--icon-stroke:2.4}
 .lrow.danger,.lrow.danger .lrow-t{color:var(--red)}
 /* A warning under a settings row reads at subtitle size: a sentence, not a row title. */
 .lrow.backup-lost .lrow-t{font-size:13px;line-height:1.3;color:var(--label-2);letter-spacing:0}
@@ -358,14 +361,14 @@ h4.sec{
    hit area back under the row's own 12px gap instead of adding to it. */
 .helpbtn{
   color:var(--label-3);font-size:16px;background:none;line-height:0;flex:none;
-  margin-block:-11px;margin-inline:-4px -2px;padding:11px 4px;
+  margin-block:-11px;margin-inline:-4px -2px;padding:11px var(--sp-1);
 }
 .helpbtn:active{color:var(--label)}
 
 /* -------------------------------------------------------------- buttons -- */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;
-  padding:14px 18px;border-radius:var(--r);font-size:17px;font-weight:600;
+  padding:14px 18px;border-radius:var(--r);font-size:var(--fs-lg);font-weight:600;
   letter-spacing:-.012em;background:var(--surface-2);color:var(--label);
   transition:transform var(--fast) var(--ease),background var(--fast),opacity var(--fast);
 }
@@ -377,9 +380,9 @@ h4.sec{
 .btn.danger{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
 .btn.ghost,.btn.plain{background:none;color:var(--acc);font-weight:400}
 .btn.ghost:active,.btn.plain:active{background:var(--surface-2)}
-.btn.sm{padding:8px 14px;width:auto;font-size:15px;border-radius:var(--r-sm);gap:5px}
+.btn.sm{padding:var(--sp-2) 14px;width:auto;font-size:var(--fs-md);border-radius:var(--r-sm);gap:5px}
 .btn.sm .icn{font-size:16px}
-.btn.xs{padding:5px 10px;width:auto;font-size:13px;border-radius:7px;gap:4px}
+.btn.xs{padding:5px 10px;width:auto;font-size:var(--fs-sm);border-radius:7px;gap:var(--sp-1)}
 .btn:disabled{opacity:.32;pointer-events:none}
 .weekly-volume-toggle{padding-block:0}
 .weekly-volume-toggle .icn{transition:transform var(--fast) var(--ease)}
@@ -462,13 +465,13 @@ h4.sec{
 }
 
 /* ------------------------------------------------------------ week strip -- */
-.week{display:flex;justify-content:space-between;gap:4px}
+.week{display:flex;justify-content:space-between;gap:var(--sp-1)}
 .wday{
-  flex:1;text-align:center;padding:8px 2px 9px;border-radius:10px;
+  flex:1;text-align:center;padding:var(--sp-2) 2px 9px;border-radius:10px;
   background:none;border:none;transition:background var(--fast);
 }
-.wday .lbl{font-size:11px;color:var(--label-3);font-weight:500;text-transform:uppercase;letter-spacing:.03em}
-.wday .num{font-size:17px;font-weight:400;margin:4px 0;letter-spacing:-.012em}
+.wday .lbl{font-size:var(--fs-xs);color:var(--label-3);font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.wday .num{font-size:var(--fs-lg);font-weight:400;margin:4px 0;letter-spacing:-.012em}
 .wday .dot{width:5px;height:5px;border-radius:50%;background:transparent;margin:0 auto}
 .wday .dot.plan{background:var(--label-3)}
 .wday .dot.ovr{background:var(--orange)}
@@ -483,10 +486,10 @@ h4.sec{
 }
 
 /* ----------------------------------------------------------------- list -- */
-.list{display:flex;flex-direction:column;gap:8px}
+.list{display:flex;flex-direction:column;gap:var(--sp-2)}
 .item{
-  display:flex;align-items:center;gap:12px;background:var(--surface);
-  border-radius:var(--r-card);padding:10px 12px;min-height:60px;
+  display:flex;align-items:center;gap:var(--sp-3);background:var(--surface);
+  border-radius:var(--r-card);padding:10px var(--sp-3);min-height:60px;
   transition:background var(--fast);text-align: start;width:100%;
 }
 .item:active{background:var(--surface-2)}
@@ -511,7 +514,7 @@ h4.sec{
    device gets the grip it looks for, with a grab cursor, and pressing it picks the row up at
    once (RoutineEdit.jsx). A touch screen keeps the long press and the row's full width. */
 .routine-grip{
-  display:none;flex:none;align-self:stretch;align-items:center;margin:-10px -6px -10px -4px;padding:0 4px;
+  display:none;flex:none;align-self:stretch;align-items:center;margin:-10px -6px -10px -4px;padding:0 var(--sp-1);
   color:var(--label-3);font-size:16px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
 }
 @media (hover:hover) and (pointer:fine){
@@ -528,13 +531,13 @@ h4.sec{
   background:var(--surface-2);color:var(--label-2);
 }
 .item .tt{font-size:16px;font-weight:400;line-height:1.25;letter-spacing:-.009em}
-.item .ss{color:var(--label-2);font-size:13px;margin-top:2px}
+.item .ss{color:var(--label-2);font-size:var(--fs-sm);margin-top:2px}
 .item .grow{flex:1;min-width:0}
 /* A row's opener as a real button (the routine editor's exercise name), so a row holding other
    buttons is no button itself. Reads as the plain text it replaced. */
 .item .item-open{display:flex;flex-direction:column;justify-content:center;align-self:stretch;text-align:start}
 .item .item-open>span{display:block}
-.chev{color:var(--label);flex:none;font-size:15px;--icon-stroke:2.4}
+.chev{color:var(--label);flex:none;font-size:var(--fs-md);--icon-stroke:2.4}
 .tag{
   display:inline-flex;align-items:center;gap:3px;background:var(--surface-2);
   color:var(--label-2);border-radius:6px;padding:3px 7px;font-size:12px;
@@ -560,10 +563,10 @@ h4.sec{
    that make every #app list two columns and every sheet list one. The catalogue pictures are
    180px, which is why a card stays near that size instead of filling a phone's width. */
 .list.ex-grid,#app .list.ex-grid,#modal-root .list.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.ex-grid .item{position:relative;flex-direction:column;align-items:stretch;gap:8px;padding:8px}
+.ex-grid .item{position:relative;flex-direction:column;align-items:stretch;gap:var(--sp-2);padding:var(--sp-2)}
 .ex-grid .item .thumb{width:100%;height:auto;aspect-ratio:1;border-radius:12px}
 .ex-grid .item .thumb-x{font-size:36px}
-.ex-grid .item .tt{font-size:15px}
+.ex-grid .item .tt{font-size:var(--fs-md)}
 /* The badges ride on the picture's top corners and "+ Plan" spans the foot of the card. The
    picker's "+" carries an inline padding/margin that widens its hit area in a row; on a card it
    sits on the picture, so those give way here. */
@@ -571,20 +574,20 @@ h4.sec{
 .ex-grid .item:not(.ex-new)>.chev{position:absolute;top:14px;inset-inline-end:14px;width:32px;height:32px;margin:0 !important;padding:7px !important;border-radius:50%;background:var(--surface)}
 .ex-grid .item>.btn{width:100%}
 /* "Create your own exercise" stays a row across the top of the grid */
-.ex-grid .item.ex-new{grid-column:1/-1;flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.ex-grid .item.ex-new{grid-column:1/-1;flex-direction:row;align-items:center;gap:var(--sp-3);padding:10px var(--sp-3)}
 .ex-grid .item.ex-new .thumb{width:50px;height:50px;border-radius:9px}
 .ex-grid .item.ex-new .thumb-x{font-size:21px}
 /* The list/cards button (ExerciseViewToggle) at the end of the search field, as tall as it and
    dressed like it; pressed while the cards are on. */
-.search-row{display:flex;gap:8px}
+.search-row{display:flex;gap:var(--sp-2)}
 .search-row>.search{flex:1;min-width:0}
-.search-row>.ex-view-btn{width:46px;height:auto;border-radius:10px;background:var(--surface-2);font-size:20px}
+.search-row>.ex-view-btn{width:46px;height:auto;border-radius:10px;background:var(--surface-2);font-size:var(--fs-xl)}
 :root[data-theme="light"] .search-row>.ex-view-btn{background:rgba(118,118,128,.12)}
 .search-row>.ex-view-btn.on,:root[data-theme="light"] .search-row>.ex-view-btn.on{background:var(--acc-soft);color:var(--acc)}
 
 /* ---------------------------------------------------------------- chips -- */
 .chips{
-  display:flex;gap:7px;overflow-x:auto;padding:4px 4px 6px;   /* room for a chip's focus outline inside a sheet (#162) */
+  display:flex;gap:7px;overflow-x:auto;padding:var(--sp-1) var(--sp-1) 6px;   /* room for a chip's focus outline inside a sheet (#162) */
   scrollbar-width:none;
 }
 .chips::-webkit-scrollbar{display:none}
@@ -627,33 +630,33 @@ body.chips-dragging *{cursor:inherit}
 /* --- text field --- */
 .field,.input{
   width:100%;background:var(--surface);border:none;border-radius:var(--r);
-  padding:13px 15px;font-size:17px;letter-spacing:-.012em;outline:none;
+  padding:13px 15px;font-size:var(--fs-lg);letter-spacing:-.012em;outline:none;
   transition:box-shadow var(--fast);
 }
 .field::placeholder,.input::placeholder{color:var(--label-3)}
 .field:focus,.input:focus{box-shadow:inset 0 0 0 2px var(--acc)}
 .field.area,textarea.input{min-height:92px;resize:vertical;line-height:1.42}
 .measure-date{display:block;margin-bottom:14px}
-.measure-date>span,.measure-field>span:first-child{display:block;color:var(--label-2);font-size:13px;margin:0 2px 6px}
+.measure-date>span,.measure-field>span:first-child{display:block;color:var(--label-2);font-size:var(--fs-sm);margin:0 2px 6px}
 .measure-date .field{background:var(--surface-2)}
 .measure-form{display:grid;grid-template-columns:1fr 1fr;gap:11px 10px}
 .measure-field{min-width:0}
-.measure-input{height:47px;background:var(--surface-2);border-radius:var(--r);display:flex;align-items:center;padding:0 12px;gap:6px}
+.measure-input{height:47px;background:var(--surface-2);border-radius:var(--r);display:flex;align-items:center;padding:0 var(--sp-3);gap:6px}
 .measure-input .num{width:100%;min-width:0;background:transparent;border:0;outline:none;font-size:18px;font-weight:500;color:var(--label);padding:0}
-.measure-input i{font-style:normal;color:var(--label-3);font-size:13px}
+.measure-input i{font-style:normal;color:var(--label-3);font-size:var(--fs-sm)}
 .measure-options{margin:12px 0 16px}
 .measure-select{margin-bottom:10px;background:var(--surface-2)}
-.measure-preview{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:11px;padding-top:10px;border-top:1px solid var(--sep);font-size:12px;color:var(--label-2)}
+.measure-preview{display:flex;flex-wrap:wrap;gap:6px var(--sp-3);margin-top:11px;padding-top:10px;border-top:1px solid var(--sep);font-size:12px;color:var(--label-2)}
 .measure-preview b{color:var(--label);font-weight:500}
-.measure-home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.measure-home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2)}
 .measure-home-grid button{background:var(--surface-2);border-radius:10px;padding:10px;text-align:left;min-width:0}
-.measure-home-grid span,.measure-home-grid i{display:block;font-size:11px;color:var(--label-2);font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.measure-home-grid span,.measure-home-grid i{display:block;font-size:var(--fs-xs);color:var(--label-2);font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .measure-home-grid b{display:block;font-size:16px;margin:3px 0;white-space:nowrap}
-.measure-empty{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;color:var(--label-2);font-size:13px;gap:10px}
+.measure-empty{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;color:var(--label-2);font-size:var(--fs-sm);gap:10px}
 .measure-empty .icn{flex:none}
 .exnote{
   background:var(--surface);border-radius:var(--r);padding:13px 15px;
-  line-height:1.45;white-space:pre-wrap;font-size:15px;margin-bottom:10px;color:var(--label-2);
+  line-height:1.45;white-space:pre-wrap;font-size:var(--fs-md);margin-bottom:10px;color:var(--label-2);
 }
 
 /* --- search field --- */
@@ -667,7 +670,7 @@ body.chips-dragging *{cursor:inherit}
 .searchf .clear{
   position:absolute;inset-inline-end:8px;width:22px;height:22px;border-radius:50%;
   background:var(--label-3);color:var(--bg);display:flex;align-items:center;
-  justify-content:center;font-size:11px;--icon-stroke:3;
+  justify-content:center;font-size:var(--fs-xs);--icon-stroke:3;
 }
 /* legacy .search wrapper */
 .search{position:relative}
@@ -684,7 +687,7 @@ body.chips-dragging *{cursor:inherit}
 .search .search-count{
   position:absolute;inset-inline-end:9px;top:50%;transform:translateY(-50%);
   font-size:12px;font-weight:600;line-height:1.4;color:var(--label-2);
-  background:var(--surface-3);padding:2px 8px;border-radius:99px;
+  background:var(--surface-3);padding:2px var(--sp-2);border-radius:99px;
   font-variant-numeric:tabular-nums;pointer-events:none;user-select:none;
 }
 /* The × that empties the search (Library and the exercise picker), the same round button as
@@ -693,7 +696,7 @@ body.chips-dragging *{cursor:inherit}
   position:absolute;inset-inline-end:8px;top:50%;transform:translateY(-50%);z-index:1;
   width:22px;height:22px;border-radius:50%;
   background:var(--label-3);color:var(--bg);display:flex;align-items:center;
-  justify-content:center;font-size:11px;--icon-stroke:3;
+  justify-content:center;font-size:var(--fs-xs);--icon-stroke:3;
 }
 .search.has-clear .input{padding-inline-end:36px}
 .search.has-count.has-clear .input{padding-inline-end:90px}
@@ -741,7 +744,7 @@ body.chips-dragging *{cursor:inherit}
 }
 :root[data-theme="light"] .seg-sel{background:#fff}
 .seg button{
-  position:relative;z-index:1;padding:6px 8px;font-size:14px;font-weight:500;
+  position:relative;z-index:1;padding:6px var(--sp-2);font-size:14px;font-weight:500;
   letter-spacing:-.006em;color:var(--label);display:flex;align-items:center;
   justify-content:center;gap:5px;min-height:30px;transition:opacity var(--fast);
 }
@@ -762,7 +765,7 @@ body.chips-dragging *{cursor:inherit}
    thumb (100%/n) still lines up; the sliding thumb is absolutely positioned with no grid
    placement, so its box is the track's padding box, as in the flex version. */
 .seg-inline{display:grid;grid-auto-flow:column;grid-auto-columns:1fr}
-.seg-inline button{padding:5px 12px;font-size:13px;min-height:28px}
+.seg-inline button{padding:5px var(--sp-3);font-size:var(--fs-sm);min-height:28px}
 .seg-inline button span{white-space:nowrap}
 .seg-inline button .icn{font-size:14px}
 
@@ -783,7 +786,7 @@ body.chips-dragging *{cursor:inherit}
 
 /* --- stepper --- */
 .stp-w{display:flex;flex-direction:column;gap:6px;min-width:0}
-.stp-l{font-size:13px;color:var(--label-2);text-align:center}
+.stp-l{font-size:var(--fs-sm);color:var(--label-2);text-align:center}
 .stp{
   display:flex;align-items:center;background:var(--surface-2);
   border-radius:10px;overflow:hidden;min-width:0;
@@ -801,7 +804,7 @@ body.chips-dragging *{cursor:inherit}
 .stp .val i{font-style:normal;font-size:12px;color:var(--label-2);flex:none}
 .stp .num{
   width:100%;min-width:0;text-align:center;background:none;border:none;outline:none;
-  font-size:17px;font-weight:500;letter-spacing:-.012em;padding:0;
+  font-size:var(--fs-lg);font-weight:500;letter-spacing:-.012em;padding:0;
   -moz-appearance:textfield;appearance:textfield;
   /* the field is the whole height of the stepper, not just its 18px text line, so a tap
      anywhere between the two buttons focuses it */
@@ -811,7 +814,7 @@ body.chips-dragging *{cursor:inherit}
 .stp.invalid{box-shadow:inset 0 0 0 1px var(--red)}
 
 /* --- rep wheel: a snapping strip of numbers over the reps cell --- */
-.stp .repbtn{width:100%;min-width:0;height:100%;min-height:40px;background:none;font-size:17px;font-weight:500;letter-spacing:-.012em;font-variant-numeric:tabular-nums}
+.stp .repbtn{width:100%;min-width:0;height:100%;min-height:40px;background:none;font-size:var(--fs-lg);font-weight:500;letter-spacing:-.012em;font-variant-numeric:tabular-nums}
 .repwheel{position:fixed;z-index:60;height:56px;display:flex;align-items:center;background:var(--surface-2);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.28)}
 .repwheel-strip{flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain;padding-inline:calc(50% - 22px);scroll-behavior:smooth;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
@@ -819,7 +822,7 @@ body.chips-dragging *{cursor:inherit}
 .repwheel-strip.calm{scroll-behavior:auto}
 .repwheel-i{flex:none;width:44px;height:100%;scroll-snap-align:center;scroll-snap-stop:always;color:var(--label-2);font-size:16px;opacity:.55;font-variant-numeric:tabular-nums;transition:font-size var(--fast),opacity var(--fast)}
 .repwheel-i.near{opacity:.8}
-.repwheel-i.on{font-size:28px;font-weight:600;color:var(--label);opacity:1}
+.repwheel-i.on{font-size:var(--fs-2xl);font-weight:600;color:var(--label);opacity:1}
 .repwheel-kb{flex:none;width:44px;height:100%;color:var(--label-2);display:flex;align-items:center;justify-content:center}
 @media (prefers-reduced-motion:reduce){.repwheel-strip{scroll-behavior:auto}}
 
@@ -878,13 +881,13 @@ body.chips-dragging *{cursor:inherit}
 /* The workout's own header (v1.3.11): ⌄ (or the editor's ✕), the name with the clock and set
    count, ⋯, and a labelled Finish pill. The name block takes what is left and truncates; the pill
    never shrinks. */
-.hdr.whdr-bar{align-items:center;gap:8px;margin:4px 0 12px}
+.hdr.whdr-bar{align-items:center;gap:var(--sp-2);margin:4px 0 12px}
 .whdr-mid{flex:1;min-width:0;text-align:center}
 .whdr-name{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* The clock and set count may take a second line: in ru/uk the count is the long half and a
    one-line ellipsis cut exactly the 0/19 the line is there for. */
-.whdr-mid .sub{font-size:13px;margin-top:1px;font-variant-numeric:tabular-nums;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere;text-wrap:balance}
-.btn.pill.whdr-finish{width:auto;flex:none;padding:8px 16px;border-radius:99px;font-size:15px;max-width:40%}
+.whdr-mid .sub{font-size:var(--fs-sm);margin-top:1px;font-variant-numeric:tabular-nums;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere;text-wrap:balance}
+.btn.pill.whdr-finish{width:auto;flex:none;padding:var(--sp-2) var(--sp-4);border-radius:99px;font-size:var(--fs-md);max-width:40%}
 /* Animations set to Small: the picture beside the exercise name, with an expand badge. */
 .wthumb{position:relative;flex:none;width:48px;height:48px;border-radius:10px;overflow:hidden;padding:0}
 .wthumb .thumb{width:48px;height:48px;border-radius:10px}
@@ -900,14 +903,14 @@ body.chips-dragging *{cursor:inherit}
 .exmedia{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#fff;margin-bottom:12px}
 .exmedia img{width:100%;height:320px;object-fit:contain;display:block}
 .exmedia .gifhint,.exmedia .giftoggle{
-  position:absolute;bottom:9px;display:inline-flex;align-items:center;gap:4px;
+  position:absolute;bottom:9px;display:inline-flex;align-items:center;gap:var(--sp-1);
   background:rgba(0,0,0,.45);color:#fff;border-radius:99px;padding:5px 11px;
   font-size:12px;font-weight:500;
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
 }
 .exmedia .gifhint{inset-inline-end:9px}
 .exmedia .giftoggle{inset-inline-start:9px}
-.exmedia .gifhint .icn,.exmedia .giftoggle .icn{font-size:13px}
+.exmedia .gifhint .icn,.exmedia .giftoggle .icn{font-size:var(--fs-sm)}
 /* superset: both exercises are on screen together, so the animations have to give way —
    at 180px you had to scroll a full screen between two exercises done back-to-back */
 .exmedia.compact img{height:120px}
@@ -930,7 +933,7 @@ body.chips-dragging *{cursor:inherit}
 /* the link to a video or a guide (#246): a quiet action tile under the picture, or in its place.
    A <button>, so the reset of the browser's button look comes first. */
 .exlink-card{
-  display:flex;align-items:center;gap:12px;width:100%;text-align:start;font:inherit;border:0;
+  display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align:start;font:inherit;border:0;
   background:var(--surface);border-radius:var(--r-card);
   padding:10px 14px;margin-bottom:12px;
   cursor:pointer;color:var(--label);
@@ -945,7 +948,7 @@ body.chips-dragging *{cursor:inherit}
 }
 .exlink-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .exlink-title{
-  font-size:15px;font-weight:500;color:var(--label);line-height:1.25;
+  font-size:var(--fs-md);font-weight:500;color:var(--label);line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* a host name reads left to right in every language; text-align keeps it on the reading side */
@@ -954,26 +957,26 @@ body.chips-dragging *{cursor:inherit}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .exlink-arr{color:var(--label-3);font-size:14px;flex:none}
-.exlink-card.mini{padding:6px 12px;gap:10px}
-.exlink-card.mini .exlink-icon{width:28px;height:28px;font-size:15px;border-radius:7px}
-.exlink-card.mini .exlink-title{font-size:13px}
+.exlink-card.mini{padding:6px var(--sp-3);gap:10px}
+.exlink-card.mini .exlink-icon{width:28px;height:28px;font-size:var(--fs-md);border-radius:7px}
+.exlink-card.mini .exlink-title{font-size:var(--fs-sm)}
 
 /* the editor's field (components/CustomMediaField.jsx): the row, a 36px thumb of the draft, the
    buttons beside it, the notes under it and the link input */
 .cmf{margin-top:8px}
-.cmf .lrow{padding-inline:4px}
+.cmf .lrow{padding-inline:var(--sp-1)}
 .cmf-act{display:flex;align-items:center;gap:6px;flex:none}
 .cmf-thumb .thumb{width:36px;height:36px;border-radius:8px}
 .cmf-thumb .thumb-x{font-size:16px}
-.cmf-sub{display:inline-flex;align-items:center;gap:4px}
-.cmf-sub .icn{font-size:13px}
+.cmf-sub{display:inline-flex;align-items:center;gap:var(--sp-1)}
+.cmf-sub .icn{font-size:var(--fs-sm)}
 .cmf-note{margin:0 4px 6px;line-height:1.35}
 .cmf-link{margin-top:4px}
 /* A logged workout's photos and videos (WorkoutMedia.jsx): a grid of posters with an Add tile,
    and the full-screen viewer they open in. Logical properties only, so RTL mirrors by itself. */
 .wmedia{margin:4px 0 12px}
 .wmedia-h{margin:0 0 6px}
-.wmedia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.wmedia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:var(--sp-2)}
 .wmedia-item,.wmedia-add{
   position:relative;aspect-ratio:1;border:0;padding:0;border-radius:10px;overflow:hidden;
   background:var(--surface-2);color:var(--label-2);cursor:pointer;font:inherit;
@@ -984,10 +987,10 @@ body.chips-dragging *{cursor:inherit}
   position:absolute;inset-inline-end:5px;bottom:5px;width:22px;height:22px;border-radius:99px;
   display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;font-size:12px;
 }
-.wmedia-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  color:var(--acc);font-size:11px;line-height:1.2;text-align:center;padding:6px;
+.wmedia-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-1);
+  color:var(--acc);font-size:var(--fs-xs);line-height:1.2;text-align:center;padding:6px;
   border:1.5px dashed var(--sep)}
-.wmedia-add .icn{font-size:20px}
+.wmedia-add .icn{font-size:var(--fs-xl)}
 .wmedia-add:disabled{opacity:.5;cursor:default}
 .wmedia-note{margin:6px 2px 0;line-height:1.35}
 .wrow-media{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--label-2);flex:none}
@@ -995,7 +998,7 @@ body.chips-dragging *{cursor:inherit}
 .pp-selected{outline:3px solid var(--acc);outline-offset:-3px}
 .pp-check{
   position:absolute;inset-inline-end:5px;top:5px;width:20px;height:20px;border-radius:99px;
-  display:flex;align-items:center;justify-content:center;background:var(--acc);color:#fff;font-size:11px;
+  display:flex;align-items:center;justify-content:center;background:var(--acc);color:#fff;font-size:var(--fs-xs);
 }
 .pp-cta{position:sticky;bottom:calc(var(--sab) + 10px);display:flex;justify-content:center;margin-top:14px}
 .pp-compare{position:relative;flex:1;min-height:0;overflow:hidden;background:#000;touch-action:none}
@@ -1011,43 +1014,43 @@ body.chips-dragging *{cursor:inherit}
 .pp-grip{width:36px;height:36px;border-radius:99px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .pp-label{
   position:absolute;bottom:14px;font-size:12px;font-weight:600;color:#fff;
-  background:rgba(0,0,0,.55);padding:4px 9px;border-radius:99px;pointer-events:none;
+  background:rgba(0,0,0,.55);padding:var(--sp-1) 9px;border-radius:99px;pointer-events:none;
 }
 .pp-label-before{inset-inline-start:10px}
 .pp-label-after{inset-inline-end:10px}
-.wrow-media .icn{font-size:13px}
+.wrow-media .icn{font-size:var(--fs-sm)}
 .mviewer{
   position:absolute;inset:0;background:#000;color:#fff;display:flex;flex-direction:column;
   padding:var(--sat) 0 var(--sab);animation:pop-fade .2s var(--ease);
 }
 @keyframes pop-fade{from{opacity:0}to{opacity:1}}
-.mviewer-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;flex:none}
+.mviewer-bar{display:flex;align-items:center;justify-content:space-between;padding:6px var(--sp-2);flex:none}
 .mviewer .iconbtn{color:#fff;background:rgba(255,255,255,.12)}
 .mviewer-count{font-size:14px;font-variant-numeric:tabular-nums;opacity:.85}
 .mviewer-stage{flex:1;min-height:0;display:flex}
 .exmedia.viewer{flex:1;min-width:0;margin:0;border-radius:0;background:#000;display:flex;align-items:center;justify-content:center}
 .exmedia.viewer img,.exmedia.viewer video{width:100%;height:100%;max-height:100%;object-fit:contain;background:#000}
 .exmedia.viewer .exmedia-x{height:100%;color:rgba(255,255,255,.5)}
-.mviewer-nav{display:flex;justify-content:space-between;padding:8px 12px;flex:none}
+.mviewer-nav{display:flex;justify-content:space-between;padding:var(--sp-2) var(--sp-3);flex:none}
 [dir="rtl"] .mviewer-nav .icn{transform:scaleX(-1)}
-.mviewer-ask{flex:none;padding:12px 16px;background:rgba(255,255,255,.08)}
+.mviewer-ask{flex:none;padding:var(--sp-3) var(--sp-4);background:rgba(255,255,255,.08)}
 .mviewer-ask-t{font-weight:600;margin-bottom:10px}
-.mviewer-ask-b{display:flex;gap:8px;justify-content:flex-end}
+.mviewer-ask-b{display:flex;gap:var(--sp-2);justify-content:flex-end}
 
 .sethead{
-  display:flex;align-items:center;gap:8px;padding:0 0 6px;
-  font-size:11px;color:var(--label-3);font-weight:500;text-transform:uppercase;letter-spacing:.045em;
+  display:flex;align-items:center;gap:var(--sp-2);padding:0 0 6px;
+  font-size:var(--fs-xs);color:var(--label-3);font-weight:500;text-transform:uppercase;letter-spacing:.045em;
 }
 .sethead .n-sp{width:24px;flex:none}
 .sethead .w-sp{flex:1.4;text-align:center}
 .sethead .r-sp{flex:1;text-align:center}
 .sethead .eff-sp{text-align:center}
 .sethead .ck-sp{width:30px;flex:none}
-.setrow{display:flex;align-items:center;gap:8px;padding:7px 0;position:relative}
+.setrow{display:flex;align-items:center;gap:var(--sp-2);padding:7px 0;position:relative}
 .setrow+.setrow::before{
   content:'';position:absolute;inset-inline-start:32px;inset-inline-end:0;top:0;height:var(--hair);background:var(--sep);
 }
-.setph{margin:8px 0 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:10px}
+.setph{margin:8px 0 2px;font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:10px}
 .setph::after{content:'';flex:1;height:1px;background:var(--sep)}
 .setsep{height:1px;background:var(--sep);margin:9px 0}
 /* the per-side wrapper carries its own .n (the set number in front of the L/R rows) */
@@ -1102,7 +1105,7 @@ body.chips-dragging *{cursor:inherit}
 .effcell{
   box-sizing:border-box;height:44px;border-radius:10px;
   background:var(--surface-2);border:1.5px solid transparent;
-  color:var(--label);font-size:15px;font-weight:600;letter-spacing:-.01em;
+  color:var(--label);font-size:var(--fs-md);font-weight:600;letter-spacing:-.01em;
   font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1;
   display:flex;align-items:center;justify-content:center;
   transition:background var(--fast),transform var(--fast),border-color var(--fast);
@@ -1119,13 +1122,13 @@ body.chips-dragging *{cursor:inherit}
 }
 .effcell-stp button{color:inherit}
 .effcell-stp>button[aria-label="Decrease"],
-.effcell-stp>button[aria-label="Increase"]{width:26px;height:44px;font-size:15px;opacity:.85;flex:0 1 auto;min-width:16px}
+.effcell-stp>button[aria-label="Increase"]{width:26px;height:44px;font-size:var(--fs-md);opacity:.85;flex:0 1 auto;min-width:16px}
 /* the value is the tap target for the picker, so it keeps a 28 px finger's width for "8.5" and
    the −/+ shrink first — on a 368 px phone it had collapsed to 4 px under its own digits, and a
    tap on the number stepped the rating instead of opening the picker (QA C22) */
 .effcell-stp .val{
   flex:1;min-width:28px;display:flex;align-items:center;justify-content:center;
-  font-size:15px;font-weight:600;letter-spacing:-.01em;
+  font-size:var(--fs-md);font-weight:600;letter-spacing:-.01em;
   font-variant-numeric:tabular-nums;line-height:1;align-self:stretch;color:inherit;
 }
 .effcell-stp .val:active{background:var(--surface-3)}
@@ -1149,14 +1152,14 @@ body.chips-dragging *{cursor:inherit}
 /* effort picker: the ⋯-menu list with the value in the icon square, tinted per band; the
    exact-value row carries the same stepper as the logged cell in the set row. */
 .effpick.menu-list .menu-item .effpick-n{
-  background:var(--bc);color:#fff;font-size:13px;font-weight:700;letter-spacing:-.02em;
+  background:var(--bc);color:#fff;font-size:var(--fs-sm);font-weight:700;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;
 }
 .effpick .menu-item.on{background:color-mix(in srgb,var(--bc) 14%,var(--surface))}
 .effpick .menu-on.is-on{color:var(--bc)}
-.effpick .effpick-free{padding-inline-end:8px}
+.effpick .effpick-free{padding-inline-end:var(--sp-2)}
 .effpick .effpick-free .stp{flex:none;width:148px}
-.effpick .effpick-free .stp .num{font-size:17px;font-weight:600}
+.effpick .effpick-free .stp .num{font-size:var(--fs-lg);font-weight:600}
 .effpick .effpick-free .stp .num::placeholder{color:var(--label-3);font-weight:500}
 .setrow.done .n{background:var(--acc);color:var(--on-acc)}
 .setrow.done{opacity:.45}
@@ -1194,9 +1197,9 @@ body.chips-dragging *{cursor:inherit}
 .swrow.flash-red .swfront{animation:swflashr .5s ease}
 @keyframes swflashr{0%,35%{background:color-mix(in srgb,var(--red) 22%,var(--surface))}100%{background:var(--surface)}}
 /* The first-use hint under the row it nudged. */
-.swhint{display:flex;justify-content:center;padding:4px 0 6px}
-.swhint button{display:inline-flex;align-items:center;gap:8px;background:var(--acc-soft);color:var(--acc);border-radius:99px;padding:7px 12px;font-size:13px;font-weight:600;animation:swhintin .3s var(--ease);text-align:start}
-.swhint .icn{font-size:15px;flex:none}
+.swhint{display:flex;justify-content:center;padding:var(--sp-1) 0 6px}
+.swhint button{display:inline-flex;align-items:center;gap:var(--sp-2);background:var(--acc-soft);color:var(--acc);border-radius:99px;padding:7px var(--sp-3);font-size:var(--fs-sm);font-weight:600;animation:swhintin .3s var(--ease);text-align:start}
+.swhint .icn{font-size:var(--fs-md);flex:none}
 .swhint .icn:last-child{opacity:.7}
 @keyframes swhintin{from{opacity:0;transform:translateY(-4px)}}
 .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
@@ -1205,23 +1208,23 @@ body.chips-dragging *{cursor:inherit}
    side its own weight/reps/effort + done tick. The two inner rows reuse .setrow so their columns
    line up with the header exactly like a straight set — only the leading .n circle is replaced by
    a small L/R badge of the same width. */
-.setrow-side{display:flex;align-items:center;gap:8px;padding:4px 0;position:relative}
+.setrow-side{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) 0;position:relative}
 .setrow-side+.setrow-side::before{content:'';position:absolute;inset-inline-start:32px;inset-inline-end:0;top:0;height:var(--hair);background:var(--sep)}
 .setrow-side>.n{align-self:center}
 .setrow-side .side-rows{flex:1;min-width:0;display:flex;flex-direction:column}
 /* inner side rows: no leading number circle (the badge takes its place), no top hairline between
    the two sides of the same set — they read as one unit. */
-.setrow-side .setrow.side{padding:4px 0}
+.setrow-side .setrow.side{padding:var(--sp-1) 0}
 .setrow-side .setrow.side+.setrow.side::before{display:none}
 .sidetag{
   width:24px;height:24px;border-radius:8px;background:var(--surface-2);color:var(--label-3);
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:600;flex:none;
 }
 /* A one-sided row with an effort column is the tightest line in the app: set number, L/R badge,
    two steppers, effort, tick. On a narrow phone the reps stepper's two buttons took all of its
    width and the number between them was gone (issue #235, 368 px). The number outranks the
    buttons here: slimmer buttons, tighter gaps, and reps gets the same share as the weight. */
-.setrow-side .setrow.side.eff3{gap:4px}
+.setrow-side .setrow.side.eff3{gap:var(--sp-1)}
 .setrow-side .setrow.side.eff3 .stp.r{flex:1.4}
 .setrow-side .setrow.side.eff3 .effcell,.setrow-side .setrow.side.eff3 .effcell-stp{flex:.6 1 0}
 .setrow-side .setrow.side.eff3 .stp.w button,.setrow-side .setrow.side.eff3 .stp.r button{width:20px}
@@ -1231,7 +1234,7 @@ body.chips-dragging *{cursor:inherit}
    and takes the badge's gap as its own, so header and rows share one column track; with an
    effort column it also mirrors the side rows' own shares (reps 1.4, effort .6). */
 .sethead.per-side .n-sp{width:56px}
-.sethead.per-side.eff3{gap:4px}
+.sethead.per-side.eff3{gap:var(--sp-1)}
 .sethead.per-side.eff3 .r-sp{flex:1.4}
 .sethead.per-side.eff3 .eff-sp{flex:.6 1 0}
 @media (max-width:400px){
@@ -1241,14 +1244,14 @@ body.chips-dragging *{cursor:inherit}
   .setrow-side{gap:5px}
   /* and on every L/R row, with or without an effort column — the default profile (no effort,
      buttons on) lost the per-side reps number the same way at 320 and 368 px (QA C2, C3) */
-  .setrow-side .setrow.side{gap:4px}
+  .setrow-side .setrow.side{gap:var(--sp-1)}
   .setrow-side .setrow.side .sidetag{width:20px}
   .setrow-side .setrow.side .stp .num{font-size:14px}
   .setrow-side .setrow.side .stp.w,.sethead.per-side .w-sp{--num:41px}
   .setrow-side .setrow.side .stp.r,.sethead.per-side .r-sp{--num:30px}
   .setrow-side .side-rows .setrow.side .stp.w button,.setrow-side .side-rows .setrow.side .stp.r button{width:18px}
   /* number 24 + gap 5 + badge 20; the row's 4 px gap is the header's too */
-  .sethead.per-side{gap:4px}
+  .sethead.per-side{gap:var(--sp-1)}
   .sethead.per-side .n-sp{width:49px}
 }
 /* The effort column steps down twice on the way to a narrow screen, not once. Its −/+ are gone
@@ -1300,7 +1303,7 @@ body.chips-dragging *{cursor:inherit}
      and a 13 px number — and it fits with two pixels to spare. Not with the buttons off (`plain`),
      where the number alone is the floor. */
   .setrow-side .setrow.side.eff3 .stp.w:not(.plain),.setrow-side .setrow.side.eff3 .stp.r:not(.plain),.sethead.per-side.eff3:not(.plain) .w-sp,.sethead.per-side.eff3:not(.plain) .r-sp{--btn-floor:16px}
-  .setrow-side .setrow.side.eff3 .stp .num{font-size:13px}
+  .setrow-side .setrow.side.eff3 .stp .num{font-size:var(--fs-sm)}
   .setrow-side .setrow.side.eff3 .stp.w,.sethead.per-side.eff3 .w-sp{--num:38px}
   .setrow-side .setrow.side.eff3 .stp.r,.sethead.per-side.eff3 .r-sp{--num:28px}
   /* A weighted timed hold has one control more than a straight row (the play button before the
@@ -1321,19 +1324,19 @@ body.chips-dragging *{cursor:inherit}
    tucks a straight row's drops under its number would be paid twice — at 320 px both number
    fields of a per-side drop collapsed to 0 px (QA C3). The label starts under the badge instead. */
 .setrow-side .side-rows .subrow{padding-inline-start:0}
-.subrow .subn{font-size:11px;color:var(--label-3);flex:none;width:46px}
+.subrow .subn{font-size:var(--fs-xs);color:var(--label-3);flex:none;width:46px}
 /* the number outranks the buttons here as in the row above: room for "227.5" (a drop's weight)
    or "100" (the second mini is always reps) at 13 px, and the buttons shrink to 16 px first */
 .subrow .stp.mini{flex:1;--num:38px;min-width:calc(var(--num) + 32px)}
 .subrow .stp.mini+.stp.mini{--num:28px}
 .subrow .stp.mini button{width:26px;height:30px;flex:0 1 auto;min-width:16px}
 .subrow .stp.mini .val{min-width:var(--num)}
-.subrow .stp.mini .num{font-size:13px;min-height:30px}
-.subrow .iconbtn{width:26px;height:26px;font-size:11px;flex:none}
+.subrow .stp.mini .num{font-size:var(--fs-sm);min-height:30px}
+.subrow .iconbtn{width:26px;height:26px;font-size:var(--fs-xs);flex:none}
 /* label 46, two minis at their floors 70 + 60, the ✕ and three gaps: 252 px with the indent — the
    whole row at 320 px. The label starts under the number circle's inner edge there instead. */
 @media (max-width:359px){
-  .subrow,.plateline{padding-inline-start:24px}
+  .subrow,.plateline{padding-inline-start:var(--sp-6)}
 }
 /* Plate line under a set row (Workout.jsx loadLine): the stack for this row's weight, what is
    missing from the inventory, and what to strip/add from the row above. */
@@ -1351,7 +1354,7 @@ body.chips-dragging *{cursor:inherit}
 .stp.plain .val{width:100%}
 .stp.plain .num{width:100%;text-align:center}
 /* --- menu sheet (the workout's "more" menus) --- */
-.menu-list .menu-item{min-height:52px;padding:8px 12px}
+.menu-list .menu-item{min-height:52px;padding:var(--sp-2) var(--sp-3)}
 .menu-list .menu-item .lrow-i{width:32px;height:32px;font-size:16px;background:var(--surface-2);color:var(--label)}
 .menu-list .menu-item.danger .tt,.menu-list .menu-item.danger .lrow-i{color:var(--red)}
 .menu-list .menu-item.disabled{opacity:.4;pointer-events:none}
@@ -1365,18 +1368,18 @@ body.chips-dragging *{cursor:inherit}
 .menu-group.grouped .menu-item+.menu-item::before{
   content:'';position:absolute;top:0;inset-inline-start:56px;inset-inline-end:0;height:var(--hair);background:var(--sep-op);
 }
-.menu-sec{font-size:13px;font-weight:600;color:var(--label-2);padding:0 6px 6px;letter-spacing:.005em}
+.menu-sec{font-size:var(--fs-sm);font-weight:600;color:var(--label-2);padding:0 6px 6px;letter-spacing:.005em}
 .menu-list .menu-item.accent .lrow-i{background:var(--acc);color:var(--on-acc)}
 .menu-chev{color:var(--label-3);font-size:14px;flex:none}
 [dir="rtl"] .menu-chev{transform:scaleX(-1)}
 .setextra{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px 32px}
-.setextra .chip.add{display:inline-flex;align-items:center;gap:4px;color:var(--acc)}
+.setextra .chip.add{display:inline-flex;align-items:center;gap:var(--sp-1);color:var(--acc)}
 .setextra .chip.add svg{width:13px;height:13px}
 .setextra .chip.add:disabled{opacity:.35}
 /* why the next target is what it is (issue #17) */
 .progline{
   width:100%;display:flex;align-items:flex-start;gap:7px;margin:6px 0 2px;padding:0;
-  text-align: start;font-size:13px;line-height:1.38;color:var(--acc);
+  text-align: start;font-size:var(--fs-sm);line-height:1.38;color:var(--acc);
 }
 .progline.warn{color:var(--yellow)}
 .progline svg{flex:none;margin-top:2px}
@@ -1385,9 +1388,9 @@ body.chips-dragging *{cursor:inherit}
 .refline{width:100%;display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:0;text-align:start}
 .refline svg{flex:none;margin-top:2px;font-size:12px}
 /* an exercise kept out of progression for this session, with its undo */
-.noprog{display:flex;align-items:center;gap:7px;margin:0 0 6px;font-size:13px;line-height:1.38;color:var(--orange)}
+.noprog{display:flex;align-items:center;gap:7px;margin:0 0 6px;font-size:var(--fs-sm);line-height:1.38;color:var(--orange)}
 .noprog svg{flex:none}
-.noprog .chip{margin-inline-start:auto;padding:3px 11px;font-size:13px;color:var(--orange);background:color-mix(in srgb,var(--orange) 14%,transparent)}
+.noprog .chip{margin-inline-start:auto;padding:3px 11px;font-size:var(--fs-sm);color:var(--orange);background:color-mix(in srgb,var(--orange) 14%,transparent)}
 
 /* start a timed set (issue #16) — sits where you'd otherwise reach for the checkbox */
 .setrow .setgo{
@@ -1399,7 +1402,7 @@ body.chips-dragging *{cursor:inherit}
 .setrow .setgo:disabled{opacity:.3;cursor:default}
 .setrow .setgo:not(:disabled):active{background:var(--surface-3)}
 /* exercise-config sheet: three steppers side by side on narrow phones */
-.cfgrow{gap:8px}
+.cfgrow{gap:var(--sp-2)}
 .cfgrow>div{flex:1;min-width:0}
 .cfgrow .stp button{width:30px}
 .cfgrow .stp-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1424,7 +1427,7 @@ body.chips-dragging *{cursor:inherit}
      clock hard to pick out mid-set. The blur stays, so it still sits above the page. */
   background:color-mix(in srgb,var(--surface) 97%,transparent);
   -webkit-backdrop-filter:saturate(180%) blur(10px);backdrop-filter:saturate(180%) blur(10px);
-  border-radius:var(--r-lg);padding:12px 12px 10px;overflow:hidden;
+  border-radius:var(--r-lg);padding:var(--sp-3) var(--sp-3) 10px;overflow:hidden;
   display:flex;align-items:center;gap:10px;
   box-shadow:0 12px 34px -8px rgba(0,0,0,.55);
   animation:slideup var(--med) var(--ease);
@@ -1436,7 +1439,7 @@ body.chips-dragging *{cursor:inherit}
    gives: in a long language on a narrow phone it becomes an icon, RestTimer.jsx useSkipFits). The label under the
    clock fills the clock's width but does not widen it. */
 #timer .tclock{flex:none;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:start;padding:2px 0}
-#timer .t{font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-.026em;font-variant-numeric:tabular-nums;white-space:nowrap}
+#timer .t{font-size:var(--fs-2xl);font-weight:600;line-height:1.1;letter-spacing:-.026em;font-variant-numeric:tabular-nums;white-space:nowrap}
 /* The rest clock is as wide as the wider of its two faces, the time and Ready: the face not
    showing sits in a hidden zero-height line (data-alt), so turning Ready does not move the
    buttons beside it. */
@@ -1487,7 +1490,7 @@ body.no-tabbar #timer{
 }
 body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10px 30px -14px rgba(0,0,0,.55)}
 @media (max-width:399px){
-  #timer .acts{gap:4px}
+  #timer .acts{gap:var(--sp-1)}
   #timer .acts .adj{padding-inline:6px;gap:1px}
   #timer .acts .pause,#timer .acts .pause-slot{padding-inline:10px}
   #timer .acts .skip{padding-inline:10px}
@@ -1514,7 +1517,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
      safe-area inset, which the layout viewport does not (viewport-fit=cover). */
   max-height:90vh;max-height:min(90vh,calc(100dvh - var(--sat) - 8px - var(--native-kb,0px)));
   overflow-y:auto;scroll-padding-bottom:calc(20px + var(--sab));
-  animation:sheetup .34s var(--ease);
+  animation:sheetup .3s var(--spring);
   overscroll-behavior:contain;touch-action:pan-y;will-change:transform;
 }
 .sheet:has(.picker-search){
@@ -1529,12 +1532,12 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
    already covers. Older Android versions resize the window and never set the variable. */
 :root[data-native-kb] .sheet{
   bottom:max(var(--picker-keyboard-bottom,0px),var(--native-kb,0px));
-  padding-bottom:20px;scroll-padding-bottom:20px;
+  padding-bottom:var(--sp-5);scroll-padding-bottom:20px;
 }
 :root[data-theme="light"] .sheet{background:var(--bg)}
 @keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
 .sheet .grab{width:36px;height:5px;border-radius:99px;background:var(--label-4);margin:6px auto 14px}
-.sheet h3{font-size:20px;font-weight:600;letter-spacing:-.021em;margin-bottom:14px}
+.sheet h3{font-size:var(--fs-xl);font-weight:600;letter-spacing:-.021em;margin-bottom:14px}
 .picker-search{
   position:sticky;top:0;z-index:2;margin-bottom:0;padding-bottom:10px;
   background:var(--bg-el);
@@ -1542,7 +1545,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 :root[data-theme="light"] .picker-search{background:var(--bg)}
 .center{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(84vw,300px);background:var(--bg-el);border-radius:var(--r-lg);padding:20px;
+  width:min(84vw,300px);background:var(--bg-el);border-radius:var(--r-lg);padding:var(--sp-5);
   max-height:calc(100dvh - 2*var(--sat) - 24px);overflow-y:auto;
   box-shadow:0 20px 60px -12px rgba(0,0,0,.5);
   animation:pop .28s var(--ease);
@@ -1566,14 +1569,14 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
   content:'';position:absolute;inset-inline-start:14px;inset-inline-end:0;top:0;height:var(--hair);background:var(--sep);
 }
 .efftbl .n{
-  width:36px;flex:none;text-align:center;font-size:17px;font-weight:600;
+  width:36px;flex:none;text-align:center;font-size:var(--fs-lg);font-weight:600;
   letter-spacing:-.02em;font-variant-numeric:tabular-nums;
 }
-.efftbl .f{flex:1;min-width:0;font-size:15px;color:var(--label-2);line-height:1.3}
+.efftbl .f{flex:1;min-width:0;font-size:var(--fs-md);color:var(--label-2);line-height:1.3}
 /* the header names the columns without competing with them */
-.efftbl .hd{background:var(--surface-2);padding-top:8px;padding-bottom:8px}
+.efftbl .hd{background:var(--surface-2);padding-top:var(--sp-2);padding-bottom:var(--sp-2)}
 .efftbl .hd .n,.efftbl .hd .f{
-  font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  font-size:var(--fs-xs);font-weight:600;letter-spacing:.05em;text-transform:uppercase;
   color:var(--label-3);
 }
 /* the row a working set usually lands on — the anchor the others are read against */
@@ -1619,7 +1622,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
    pushed under the `.chart` clip at either edge — hence no offset here. */
 .ctip{
   position:absolute;left:0;top:0;background:var(--surface-2);
-  border-radius:8px;padding:4px 10px;font-size:12px;font-weight:500;white-space:nowrap;
+  border-radius:8px;padding:var(--sp-1) 10px;font-size:12px;font-weight:500;white-space:nowrap;
   max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;
   pointer-events:none;box-shadow:0 6px 18px -4px rgba(0,0,0,.4);
 }
@@ -1628,7 +1631,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .hm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
 .hm-wrap::-webkit-scrollbar{display:none}
 .hm-months{display:flex;margin-inline-start:28px;margin-bottom:5px}
-.hm-months span{flex:none;width:14px;font-size:11px;color:var(--label-3);white-space:nowrap;overflow:visible}
+.hm-months span{flex:none;width:14px;font-size:var(--fs-xs);color:var(--label-3);white-space:nowrap;overflow:visible}
 .hm-body{display:flex}
 .hm-days{display:flex;flex-direction:column;gap:3px;flex:none;width:28px}
 .hm-days span{height:11px;font-size:10px;color:var(--label-2);line-height:11px}
@@ -1643,8 +1646,8 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .hm-c.future{opacity:.3}
 .hm-c.noted{box-shadow:inset 0 0 0 1.5px var(--indigo)}
 .hm-legend{
-  display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:9px;
-  font-size:11px;color:var(--label-3);
+  display:flex;align-items:center;gap:var(--sp-1);justify-content:flex-end;margin-top:9px;
+  font-size:var(--fs-xs);color:var(--label-3);
 }
 .hm-legend .hm-c{width:10px;height:10px}
 
@@ -1652,7 +1655,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
    holds a portrait card's shape so nothing below it jumps when the picture lands. */
 .share-card{margin:0 auto 14px;max-width:420px}
 .share-card img{display:block;width:100%;max-height:56vh;object-fit:contain;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.28)}
-.share-card-ph{aspect-ratio:4/5;max-height:56vh;margin:0 auto;border-radius:16px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;text-align:center;padding:16px}
+.share-card-ph{aspect-ratio:4/5;max-height:56vh;margin:0 auto;border-radius:16px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;text-align:center;padding:var(--sp-4)}
 /* --- muscle map --- */
 /* Reuses the .hm-c level ramp above, so one accent scale means one thing app-wide. */
 /* An untrained muscle is derived from the text colour rather than a fixed surface, so
@@ -1698,13 +1701,13 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
    readings at the top of the effort card. */
 .stat-v{font-size:26px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
 .mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.mchip{font-size:12px;padding:4px 9px;border-radius:99px;background:var(--surface-2);color:var(--label-2)}
+.mchip{font-size:12px;padding:var(--sp-1) 9px;border-radius:99px;background:var(--surface-2);color:var(--label-2)}
 .mchip.miss{background:color-mix(in srgb,var(--orange) 16%,transparent);color:var(--orange)}
 
 /* --- stat tiles --- */
 /* Home dashboard */
 .dash-hero .week{margin-top:12px}
-.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:8px}
 .dash-grid>.card{min-width:0}
 .dash-grid .card{margin:0;min-height:44px}
 .dash-num{font-size:24px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;line-height:1.1}
@@ -1718,7 +1721,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .tile{background:var(--surface);border-radius:var(--r-card);padding:14px}
 .tile .l{
-  color:var(--label-2);font-size:13px;font-weight:400;letter-spacing:-.004em;
+  color:var(--label-2);font-size:var(--fs-sm);font-weight:400;letter-spacing:-.004em;
   text-transform:none;display:flex;align-items:center;gap:5px;
 }
 .tile .l .icn{font-size:14px;color:var(--label)}
@@ -1727,11 +1730,11 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 
 /* --- PR badge --- */
 .pr{
-  display:inline-flex;align-items:center;gap:4px;
+  display:inline-flex;align-items:center;gap:var(--sp-1);
   background:color-mix(in srgb,var(--yellow) 18%,transparent);color:var(--yellow);
-  border-radius:6px;padding:3px 8px;font-size:12px;font-weight:500;
+  border-radius:6px;padding:3px var(--sp-2);font-size:12px;font-weight:500;
 }
-.pr .icn{font-size:13px}
+.pr .icn{font-size:var(--fs-sm)}
 
 /* --- toast --- */
 #toast{
@@ -1741,7 +1744,7 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
   /* 22px, not a pill radius: one line (about 41px high) still reads as a pill, and a toast that
      wraps to four lines is a rounded box instead of a circle over the page. */
-  border-radius:var(--r-xl);padding:11px 20px;font-size:15px;font-weight:500;
+  border-radius:var(--r-xl);padding:11px var(--sp-5);font-size:15px;font-weight:500;
   box-shadow:0 10px 30px -6px rgba(0,0,0,.5);
   opacity:0;pointer-events:none;transition:opacity var(--med),transform var(--med) var(--ease);
   /* As wide as its text up to 88vw. Without a width, left:50% left it half the screen to wrap
@@ -1750,30 +1753,30 @@ body.no-tabbar #timer.working{box-shadow:inset 0 var(--hair) 0 var(--acc),0 -10p
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* With an action (Undo): the message, then the button at the end, and the toast takes taps. */
-#toast.has-action{pointer-events:auto;display:flex;align-items:center;gap:6px;padding:4px 6px 4px 18px;text-align:start}
+#toast.has-action{pointer-events:auto;display:flex;align-items:center;gap:6px;padding:var(--sp-1) 6px var(--sp-1) 18px;text-align:start}
 #toast.has-action .toast-msg{flex:1;min-width:0;padding:7px 0}
-#toast .toast-act{flex:none;display:inline-flex;align-items:center;gap:5px;color:var(--acc);font-weight:700;padding:8px 12px;border-radius:14px;min-height:36px}
+#toast .toast-act{flex:none;display:inline-flex;align-items:center;gap:5px;color:var(--acc);font-weight:700;padding:var(--sp-2) var(--sp-3);border-radius:14px;min-height:36px}
 #toast .toast-act:active{background:color-mix(in srgb,var(--label) 10%,transparent)}
 #toast .toast-act .icn{font-size:16px}
 body.no-tabbar #toast{bottom:calc(24px + var(--sab))}
 body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
 
 /* ---------------------------------------------------------------- misc --- */
-.empty{text-align:center;color:var(--label-2);padding:44px 20px;font-size:15px;line-height:1.45}
+.empty{text-align:center;color:var(--label-2);padding:44px var(--sp-5);font-size:var(--fs-md);line-height:1.45}
 .empty .ico{font-size:34px;color:var(--label-2);margin-bottom:12px;display:flex;justify-content:center}
 .steps-list{
-  padding-inline-start:18px;color:var(--label-2);font-size:15px;line-height:1.5;
+  padding-inline-start:18px;color:var(--label-2);font-size:var(--fs-md);line-height:1.5;
   display:flex;flex-direction:column;gap:9px;
 }
 .steps-list::marker{color:var(--label-3)}
 
 /* --- month calendar --- */
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
-.cal-h{text-align:center;font-size:11px;color:var(--label-3);font-weight:500;text-transform:uppercase;padding:2px 0}
+.cal-h{text-align:center;font-size:var(--fs-xs);color:var(--label-3);font-weight:500;text-transform:uppercase;padding:2px 0}
 .cal-d{
   aspect-ratio:1;border-radius:10px;background:var(--surface);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  font-weight:400;font-size:15px;color:var(--label);transition:background var(--fast);
+  font-weight:400;font-size:var(--fs-md);color:var(--label);transition:background var(--fast);
 }
 .cal-d:active{background:var(--surface-2)}
 .cal-d.has{background:var(--acc-soft);color:var(--acc)}
@@ -1787,14 +1790,14 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
 .cal-legend i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-inline-end:5px}
 
 /* --- accent swatches --- */
-.swatches{display:flex;gap:12px;flex-wrap:wrap}
+.swatches{display:flex;gap:var(--sp-3);flex-wrap:wrap}
 .swatch{width:32px;height:32px;border-radius:50%;flex:none;position:relative;transition:transform var(--fast)}
 .swatch:active{transform:scale(.9)}
 /* The ring takes no taps: over the own colour it lay on the colour input, so the picker never opened. */
 .swatch.on::after{content:'';position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--label);pointer-events:none}
 /* The user's own colour (Settings → Accent color): a rainbow ring until there is one, then filled
    with it. The native colour input lies over it, invisible, so the tap lands on the input itself. */
-.swatch-own{display:inline-flex;align-items:center;justify-content:center;font-size:15px;--icon-stroke:2.4}
+.swatch-own{display:inline-flex;align-items:center;justify-content:center;font-size:var(--fs-md);--icon-stroke:2.4}
 .swatch-own.unset{
   background:radial-gradient(circle,var(--surface) 0 52%,transparent 54%),
     conic-gradient(#ff453a,#ff9f0a,#ffd60a,#30d158,#40c8e0,#0a84ff,#bf5af2,#ff375f,#ff453a);
@@ -1808,9 +1811,9 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
   font-size:12px;font-weight:600;letter-spacing:-.004em;text-transform:none;
   color:var(--acc);margin-block:8px 5px;margin-inline-start:4px;display:flex;align-items:center;gap:5px;
 }
-.ss-label .icn{font-size:13px}
+.ss-label .icn{font-size:var(--fs-sm)}
 /* The routine editor's label opens the superset's name and rest (#292). */
-.ss-label-btn{background:none;border:0;padding:4px 6px;margin-inline-start:-2px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;font-weight:600;min-height:28px;max-width:100%}
+.ss-label-btn{background:none;border:0;padding:var(--sp-1) 6px;margin-inline-start:-2px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;font-weight:600;min-height:28px;max-width:100%}
 .ss-label-btn:active{background:var(--surface-2)}
 .ss-label-btn .ss-label-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ss-label-btn .dim{font-weight:500;white-space:nowrap}
@@ -1845,14 +1848,14 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
    401–404 px and its done tick sat in the card's side padding. 405 px is the width where those
    285 px and the three full insets first add up to the screen, so that is where it ends. */
 @media (max-width:404px){
-  .ss-card{padding:10px 8px}
+  .ss-card{padding:10px var(--sp-2)}
   /* The sets card nested in a superset card or a list unit pays a second inset, and in a superset
      in the list view a third; with an L/R row's set number, badge, two steppers, effort and tick
      it is the line that decides whether the numbers fit. 8 px each, and the superset card inside
      a unit keeps 4 (none below 360), so every set row has the same 256 px at 320 as in a plain
      card, and 296–304 at 368. */
-  .wl-unit .card,.ss-card .card{padding-inline:8px}
-  .wl-unit .ss-card{padding-inline:4px}
+  .wl-unit .card,.ss-card .card{padding-inline:var(--sp-2)}
+  .wl-unit .ss-card{padding-inline:var(--sp-1)}
 }
 @media (max-width:359px){
   .wl-unit .ss-card{padding-inline:0}
@@ -1862,7 +1865,7 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
   text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;
 }
 .ss-ex{position:relative}
-.ss-amp{text-align:center;font-size:15px;font-weight:600;color:var(--acc);margin:14px 0 8px}
+.ss-amp{text-align:center;font-size:var(--fs-md);font-weight:600;color:var(--acc);margin:14px 0 8px}
 
 /* --- workout list view: every unit stacked, the current one outlined --- */
 /* minmax(0, …): a grid's default `auto` track is at least as wide as its widest content, so a set
@@ -1870,7 +1873,7 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
    push the ticks off it. Capped, a row that does not fit overflows its own card instead. */
 .workout-list{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .wl-unit{
-  border-radius:var(--r-lg);padding:14px 14px 4px;
+  border-radius:var(--r-lg);padding:14px 14px var(--sp-1);
   background:var(--surface-2);
 }
 /* scrolled to when the list opens (#224): clear the sticky header above it. Workout.jsx
@@ -1878,8 +1881,8 @@ body.no-tabbar.resting #toast{bottom:calc(100px + var(--sab))}
    the session name wraps; the fallback is the height of a one-line header. */
 .wl-unit{scroll-margin-top:calc(var(--whdr-h, var(--sat) + var(--conn) + 80px) + 16px)}
 .wl-unit.cur{box-shadow:inset 0 0 0 1.5px var(--acc-line)}
-.wl-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-.wl-summary{display:grid;gap:8px;padding-bottom:10px}
+.wl-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:10px}
+.wl-summary{display:grid;gap:var(--sp-2);padding-bottom:10px}
 /* the folded unit is a button (a tap opens it again): full width, text where it always sat */
 button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var(--r-sm)}
 
@@ -1889,11 +1892,11 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
    the accent ring. Every chip is the same height whatever its state, and the row scrolls sideways
    (.chips), so nothing here can move the page while you type. 28px chips with the strip's own
    padding keep the row at about the height of the line it replaces. */
-.chips.wchips{gap:6px;padding:4px 5px 5px;margin-bottom:2px}   /* room for the current chip's ring: the strip clips */
+.chips.wchips{gap:6px;padding:var(--sp-1) 5px 5px;margin-bottom:2px}   /* room for the current chip's ring: the strip clips */
 .wchip{
   flex:none;position:relative;display:inline-flex;align-items:center;justify-content:center;gap:2px;
-  min-width:28px;height:28px;padding:0 8px;border-radius:99px;
-  font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--label-2);
+  min-width:28px;height:28px;padding:0 var(--sp-2);border-radius:99px;
+  font-size:var(--fs-sm);font-weight:600;font-variant-numeric:tabular-nums;color:var(--label-2);
   background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--sep);
 }
 .wchip .icn{width:12px;height:12px}
@@ -1903,19 +1906,19 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .wchip.partial.cur{box-shadow:inset 0 0 0 1.5px var(--orange),0 0 0 2px var(--bg),0 0 0 3.5px var(--acc)}
 /* part of the give-back above — one edge for all three insets of a row in the list view */
 @media (max-width:404px){
-  .wl-unit{padding:10px 8px 2px}
+  .wl-unit{padding:10px var(--sp-2) 2px}
 }
 
 /* --- home: today's session row --- */
 .today-row{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:0;padding:12px 16px;border-radius:var(--r);background:var(--surface-2);
+  margin-top:0;padding:var(--sp-3) var(--sp-4);border-radius:var(--r);background:var(--surface-2);
   transition:background var(--fast);width:100%;text-align: start;cursor:pointer;
 }
 .today-row:active{background:var(--surface-3)}
-.today-row .lbl2{font-size:11px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--label-3)}
+.today-row .lbl2{font-size:var(--fs-xs);font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--label-3)}
 .today-row .ttl{
-  font-weight:500;font-size:17px;line-height:1.25;text-transform:capitalize;
+  font-weight:500;font-size:var(--fs-lg);line-height:1.25;text-transform:capitalize;
   letter-spacing:-.012em;margin-top:2px;
   /* two lines before the ellipsis: "Leg Day — in progress" grows past one line in hu/tr/th/pt-BR */
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;
@@ -1944,7 +1947,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
      lets it win: `.narrow .list` alone lost to `#app .list` on specificity, so Home, Workout,
      Admin and the rest showed their lists two-up on a computer. Sheets live in #modal-root,
      outside #app, and are one column at every width. */
-  #app .list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #app .list{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)}
   #modal-root .list,#app .narrow .list{display:flex;flex-direction:column}
   .narrow{max-width:640px;margin:0 auto}
   .tiles{grid-template-columns:repeat(4,1fr)}
@@ -1970,7 +1973,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .ci-rail{
   display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;
-  padding:4px 0 8px;margin:0 -16px;padding-left:16px;padding-right:16px;
+  padding:var(--sp-1) 0 var(--sp-2);margin:0 -16px;padding-left:var(--sp-4);padding-right:var(--sp-4);
 }
 .ci-rail::-webkit-scrollbar{display:none}
 .ci-card{
@@ -1981,19 +1984,19 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 }
 /* header row: edit — title — trash. The two icon buttons are equal fixed widths so the title,
    flexed between them, stays optically centered on the card no matter how long it is. */
-.ci-card-hd{display:flex;align-items:center;gap:8px;width:100%}
+.ci-card-hd{display:flex;align-items:center;gap:var(--sp-2);width:100%}
 .ci-card-btn{width:30px;height:30px;font-size:14px;flex:none}
 .ci-card .ci-label{flex:1;min-width:0;font-size:19px;font-weight:600;letter-spacing:-.014em;text-align:center;overflow-wrap:anywhere}
 .ci-card .ci-value{font-size:14px;color:var(--label-2);word-break:break-all;text-align:center;font-variant-numeric:tabular-nums}
 /* reorder row under a card (only shown with >1 card): ◀ position ▶ to nudge the card one slot
    along the rail. A plain, reliable control — no drag gesture to fight the horizontal scroll. */
 .ci-reorder{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:2px}
-.ci-reorder .ci-pos{font-size:13px;color:var(--label-2);font-variant-numeric:tabular-nums;min-width:44px;text-align:center}
+.ci-reorder .ci-pos{font-size:var(--fs-sm);color:var(--label-2);font-variant-numeric:tabular-nums;min-width:44px;text-align:center}
 .ci-reorder .iconbtn:disabled{opacity:.3;pointer-events:none}
 /* The QR itself: lean-qr paints 1 module per pixel, so scale it up with the browser's
    nearest-neighbour so every module stays a crisp square instead of a blurred blob. White
    quiet-zone padding is baked in by the renderer; the plate underneath just frames it. */
-.ci-qr-plate{background:#fff;border-radius:var(--r-lg);padding:16px}
+.ci-qr-plate{background:#fff;border-radius:var(--r-lg);padding:var(--sp-4)}
 .qr-canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;transition:opacity var(--fast)}
 /* the trailing add card — a big + on a dashed outline, same footprint as a real card */
 .ci-add{
@@ -2017,25 +2020,25 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 /* ---------------------------------------------------------------- Plan -- */
 /* Schedule | Routines (views/Plan.jsx). A settings-like page, one column at every width. */
 .plan-views{margin-bottom:18px}
-.plan-views button{min-height:34px;font-size:15px}
+.plan-views button{min-height:34px;font-size:var(--fs-md)}
 .plan .plan-mode .lrow-t{white-space:nowrap}
 /* The control takes the rest of the row when it fits, and a full line of its own when it does
    not, rather than squeezing "Fixed Week" onto two lines. */
 .plan-mode .seg-inline{flex:1 1 200px;min-width:0}
 .plan-mode .seg-inline button{white-space:nowrap}
 .plan-mode-locked{margin-inline-start:auto;text-align:end}
-.plan-sec-h{margin:22px 0 8px;gap:8px;flex-wrap:wrap}
+.plan-sec-h{margin:22px 0 8px;gap:var(--sp-2);flex-wrap:wrap}
 /* Long words (German "Hinzufügen") push the loop's buttons off a 320 px screen; they drop
    to their own line instead and stay on the trailing edge. */
 .plan-sec-h>.plan-sec-acts{margin-inline-start:auto}
 .plan-sec-h h4.sec{margin:0}
 .plan-routines-bar{margin-top:0}
-.plan-textbtn{color:var(--acc);font-size:16px;padding:6px 4px;position:relative}
+.plan-textbtn{color:var(--acc);font-size:16px;padding:6px var(--sp-1);position:relative}
 .plan-textbtn::before{content:'';position:absolute;inset:-6px}
 .plan .sect-f{margin:0 0 4px}
-.plan .list+.sect-f{padding-top:8px}
+.plan .list+.sect-f{padding-top:var(--sp-2)}
 /* a weekday: short day name, the routine's glyph (a moon on a rest day), what is on it */
-.plan-day-n{min-width:30px;flex:none;white-space:nowrap;font-size:15px;font-weight:600;color:var(--label-2)}
+.plan-day-n{min-width:30px;flex:none;white-space:nowrap;font-size:var(--fs-md);font-weight:600;color:var(--label-2)}
 .plan-day-n.today{color:var(--acc)}
 /* Arabic names the whole day: one column wide enough for the longest keeps the glyphs aligned */
 [dir="rtl"] .plan-day-n{min-width:88px}
@@ -2043,7 +2046,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 /* the loop: a numbered position, lit when up next, a tick once done this round */
 .plan-order{
   width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
-  font-size:13px;font-weight:600;color:var(--label-2);background:var(--surface-3);--icon-stroke:2.6;
+  font-size:var(--fs-sm);font-weight:600;color:var(--label-2);background:var(--surface-3);--icon-stroke:2.6;
 }
 .plan-order.next{background:var(--acc);color:var(--on-acc)}
 .rotation-row.is-done .tt{color:var(--label-2)}
@@ -2060,7 +2063,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .plan-handle:active{cursor:grabbing;color:var(--label-2)}
 .plan [data-reorder-row]{transition:transform var(--fast) var(--ease)}
 .plan-link{margin-top:24px}
-.plan-empty{padding:28px 20px}
+.plan-empty{padding:28px var(--sp-5)}
 /* Stats: the card Plan links to clears the sticky banners when it is scrolled to */
 #weekly-volume{scroll-margin-top:calc(var(--sat) + var(--conn) + 96px)}
 
@@ -2087,7 +2090,7 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .dw-it.on{color:var(--label);font-weight:600}
 .dw-it.out{color:var(--label-4)}
 .dw-unit{position:absolute;top:calc(var(--dw-item) * 2);height:var(--dw-item);display:flex;align-items:center;
-  inset-inline-start:calc(50% + 8px);font-size:17px;font-weight:600;color:var(--label);pointer-events:none}
+  inset-inline-start:calc(50% + 8px);font-size:var(--fs-lg);font-weight:600;color:var(--label);pointer-events:none}
 .dw-read{text-align:center;font-size:34px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:-4px 0 2px}
 .dw-foot{text-align:center;margin:-6px 0 14px;line-height:1.4}
 @media (hover:hover){.dw-it:hover{color:var(--label)}}
@@ -2099,19 +2102,19 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
    over when the label needs the room. Only a label past half the screen is cut. */
 .sp-nav{display:grid;grid-template-columns:minmax(max-content,1fr) minmax(0,max-content) minmax(0,1fr);align-items:center;column-gap:6px;
   min-height:44px;margin:4px -6px 10px}
-.sp-back{display:inline-flex;align-items:center;gap:2px;color:var(--acc);font-size:17px;padding:6px;border-radius:10px;
+.sp-back{display:inline-flex;align-items:center;gap:2px;color:var(--acc);font-size:var(--fs-lg);padding:6px;border-radius:10px;
   min-width:0;max-width:50vw;justify-self:start}
 .sp-back span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-back .icn{font-size:22px;--icon-stroke:2.2;flex:none}
 /* A long title ("Alertas do temporizador", "Megjelenés és Kezdőlap") takes a second line rather
    than lose its end to an ellipsis next to a whole back label. */
-.sp-title{text-align:center;font-weight:600;font-size:17px;line-height:1.2;margin:0;overflow:hidden;overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto;
+.sp-title{text-align:center;font-weight:600;font-size:var(--fs-lg);line-height:1.2;margin:0;overflow:hidden;overflow-wrap:anywhere;-webkit-hyphens:auto;hyphens:auto;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;text-wrap:balance}
 .sp-root-title{font-size:34px;line-height:1.06;font-weight:700;letter-spacing:-.028em;margin:2px 0 10px}
 @media (max-width:420px){.sp-root-title{font-size:30px}}
 .sp-search{margin-bottom:18px}
 /* the account card on top of the root: a big round avatar, the name, one line under it */
-.lrow.sp-acct{padding-block:12px;gap:14px}
+.lrow.sp-acct{padding-block:var(--sp-3);gap:14px}
 .sp-avatar{width:56px;height:56px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:30px;
   background:linear-gradient(160deg,var(--surface-3),var(--surface-2));color:var(--label-2)}
 .sp-acct .lrow-t{font-size:19px;font-weight:600}
@@ -2124,17 +2127,17 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 .lrow.sp-root-row .lrow-v{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;
   min-width:min-content;max-width:62%;line-height:1.25;text-wrap:balance}
 @media (max-width:360px){
-  .lrow.sp-root-row:has(.lrow-v){display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:12px;row-gap:1px}
+  .lrow.sp-root-row:has(.lrow-v){display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:var(--sp-3);row-gap:1px}
   .lrow.sp-root-row:has(.lrow-v) .lrow-i{grid-column:1;grid-row:1 / span 2}
   .lrow.sp-root-row:has(.lrow-v) .lrow-m{grid-column:2;grid-row:1}
-  .lrow.sp-root-row .lrow-v{grid-column:2;grid-row:2;min-width:0;max-width:none;text-align:start;font-size:15px;-webkit-line-clamp:2;line-clamp:2}
+  .lrow.sp-root-row .lrow-v{grid-column:2;grid-row:2;min-width:0;max-width:none;text-align:start;font-size:var(--fs-md);-webkit-line-clamp:2;line-clamp:2}
   .lrow.sp-root-row:has(.lrow-v) .lrow-c{grid-column:3;grid-row:1 / span 2}
 }
 .lrow.dis .lrow-i,.lrow.dis .lrow-t,.lrow.dis .sw{opacity:.45}
 /* a row a search result jumped to: a short accent wash that fades out */
 .lrow.sp-flash,.btn.sp-flash{animation:spflash 1.8s ease}
 @keyframes spflash{0%,45%{background:var(--acc-soft)}100%{background:transparent}}
-.sp-empty{color:var(--label-2);text-align:center;padding:28px 12px;line-height:1.4}
+.sp-empty{color:var(--label-2);text-align:center;padding:28px var(--sp-3);line-height:1.4}
 
 /* ----------------------------------------------------------- RTL (Arabic) -- */
 /* Directional icons flip: back chevrons point right, trailing chevrons point left. */
@@ -2161,3 +2164,14 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 [dir="rtl"] *{letter-spacing:0}
 .exfix-link{display:inline-flex;align-items:center;gap:5px;margin:14px 0 4px;color:var(--label-3);text-decoration:none}
 .list .similar-label{margin:16px 2px 6px;grid-column:1/-1}
+
+/* ------------------------------------------------------------- motion --- */
+.chk.on,.ck.on{animation:chk-pop .22s var(--spring)}
+@keyframes chk-pop{from{transform:scale(.8)}to{transform:none}}
+.pr-burst{position:relative}
+.pr-burst::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  border:2px solid var(--acc);opacity:0;animation:pr-ring .8s var(--ease) 1;
+}
+@keyframes pr-ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.set-prev{color:var(--label-3);font-size:var(--fs-xs);font-variant-numeric:tabular-nums}
