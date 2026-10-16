@@ -30,3 +30,7 @@ frontend/bundle-size.json
 
 # Local planning notes
 docs/superpowers/plans/
+
+# xtool shell: web copy of frontend/dist (239 MB) and build output
+OpenGym/Sources/OpenGym/web/
+OpenGym/xtool/

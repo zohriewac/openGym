@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useSyncExternalStore } from 'react'
 import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
 import { useStore, DEF, hasData } from '../store/useStore.js'
+import { isHealthKit, pullHealthKit } from '../lib/healthkit-sync.js'
 import { healthStatus, loadHealth, enableHealth, disableHealth, openHealthConnect, onHealthChange } from '../lib/health-sync.js'
 import { workoutControls } from '../lib/workout-controls.js'
 import { speedUnitOf } from '../lib/speed.js'
@@ -785,6 +786,7 @@ export default function Settings({ page = null, find = null, via = null }) {
         {MOBILE && android && S.autoBackup && <BackupFolderRow />}
       </Section>
       {MOBILE && android && <HealthConnectCard S={S} toast={toast} />}
+      {isHealthKit() && <AppleHealthCard toast={toast} />}
       <Section title={t('Bring data in')}>
         <Row icon="download" iconTint="var(--teal)" title={t('Import backup')} accessory="chevron" onClick={() => fileRef.current.click()} />
         <Row icon="download" iconTint="var(--teal)" title={t('Import from another app')}
@@ -1433,6 +1435,26 @@ function RegisterInline({ close, setUser, pushState, pullState, toast }) {
 // its own file (lib/health-sync.js) and not in S, so it never switches on anywhere else. The card
 // stays out of the way on a phone without Health Connect, and only points to installing it on
 // Android 13 and lower, where it is an app of its own.
+// iOS shell only: pulls weigh-ins and resting heart rate from Apple Health, read-only.
+function AppleHealthCard({ toast }) {
+  const [busy, setBusy] = useState(false)
+  const sync = async () => {
+    setBusy(true)
+    const r = await pullHealthKit(() => useStore.getState().S, fn => useStore.getState().update(fn))
+    setBusy(false)
+    if (r.status === 'ok') toast(r.added ? t('Added {0} days from Apple Health', r.added) : t('Nothing new, or access is off. Check Health → Sharing → openGym'))
+    else toast(t('Could not read Apple Health'))
+  }
+  return (
+    <Section title={t('Apple Health')}
+      footer={t('Reads body weight and resting heart rate, last 90 days. openGym writes nothing to Health.')}>
+      <Row icon="heart" iconTint="var(--red)" title={t('Sync from Apple Health')}
+        subtitle={t('Weigh-ins and resting heart rate, kept on this phone')}
+        accessory="chevron" onClick={busy ? undefined : sync} />
+    </Section>
+  )
+}
+
 function HealthConnectCard({ S, toast }) {
   const [st, setSt] = useState(null)
   const [h, setH] = useState(null)

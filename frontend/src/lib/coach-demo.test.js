@@ -57,8 +57,8 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers() })
 
 describe('coach-demo — the job machine', () => {
-  it('is idle until asked, and reports the same cap shape the real status does', () => {
-    expect(demoStatus()).toEqual({ job: null, pending: null, cap: { used: 0, limit: 0 }, lastError: null })
+  it('is idle until asked', () => {
+    expect(demoStatus()).toEqual({ job: null, pending: null, lastError: null })
   })
 
   it('answers 2.2 s later, not before — the job is visible for the whole wait', () => {
@@ -95,7 +95,7 @@ describe('coach-demo — the job machine', () => {
     vi.advanceTimersByTime(864e5)
     expect(demoStatus().pending).toBeTruthy()
     expect(demoResolve()).toEqual({ ok: true })
-    expect(demoStatus()).toEqual({ job: null, pending: null, cap: { used: 0, limit: 0 }, lastError: null })
+    expect(demoStatus()).toEqual({ job: null, pending: null, lastError: null })
   })
 
   it('a builder that throws ends the job, records the failure, and does not refuse the next request', () => {

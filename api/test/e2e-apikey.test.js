@@ -79,7 +79,7 @@ async function settle(uid, ms = 20000) {
 async function runReview(provider, key, uid) {
   seen.length = 0;
   cfg.reset();
-  cfg.save({ enabled: true, provider, authMode: 'instance', auth: {}, models: {}, boundUid: {}, log: [], caps: { perProfileDaily: 50, instanceDaily: 0 },
+  cfg.save({ enabled: true, provider, authMode: 'instance', auth: {}, models: {}, boundUid: {}, log: [], caps: { instanceDaily: 0 },
     providerOptions: { [provider]: { baseUrl: BASE } } });
   let r = await call('POST /api/admin/coach/connect', { type: 'apikey', token: key });
   assert.equal(r.status, 200, JSON.stringify(r.body));

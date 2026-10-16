@@ -466,45 +466,40 @@ describe('AdminCoach — model', () => {
 describe('AdminCoach — daily caps (what bounds the spend on the operator\'s account)', () => {
   const capFields = () => [...host.querySelectorAll('input.num')]
 
-  it('changing the per-user cap sends BOTH caps, so the other one is not dropped by the merge', async () => {
+  // The per-user cap box is gone from the card (only the instance cap is editable); the stored
+  // per-user value must still ride along so the server-side merge does not drop it.
+  it('changing the instance cap carries the stored per-user cap through untouched', async () => {
     await mount()
-    await blurWith(capFields()[0], '12')
+    await blurWith(capFields()[0], '400')
     expect(sent('/api/admin/coach/config')).toEqual([
-      { path: '/api/admin/coach/config', method: 'POST', body: { caps: { perProfileDaily: 12, instanceDaily: 50 } } }
+      { path: '/api/admin/coach/config', method: 'POST', body: { caps: { perProfileDaily: 5, instanceDaily: 400 } } }
     ])
-  })
-
-  it('changing the instance cap likewise carries the per-user one through untouched', async () => {
-    await mount()
-    await blurWith(capFields()[1], '400')
-    expect(sent('/api/admin/coach/config')[0].body).toEqual({ caps: { perProfileDaily: 5, instanceDaily: 400 } })
   })
 
   it('an unchanged cap writes nothing', async () => {
     await mount()
-    await blurWith(capFields()[0], '5')
+    await blurWith(capFields()[0], '50')
     expect(sent('/api/admin/coach/config')).toHaveLength(0)
   })
 
-  // `0 means no limit` is what the card says one line above these boxes, and a number input
-  // hands back "" for anything it cannot parse. Until 2026-09-22 emptying the box to retype and
-  // clicking away wrote 0: the daily cap on the operator's API key, gone in one blur with no
-  // confirmation and no toast. An empty box is no change now, the stored value comes back into
-  // it, and removing the cap takes typing an explicit 0.
+  // `0 means no limit` is what the card says above the box, and a number input hands back ""
+  // for anything it cannot parse. Emptying the box to retype must not silently uncap the
+  // operator's API key: an empty box is no change, the stored value comes back, and removing
+  // the cap takes typing an explicit 0.
   it('emptying a cap box writes nothing and puts the stored value back', async () => {
     await mount()
     await blurWith(capFields()[0], '')
     expect(sent('/api/admin/coach/config')).toHaveLength(0)
-    expect(capFields()[0].value).toBe('5')
-    await blurWith(capFields()[1], '   ')
+    expect(capFields()[0].value).toBe('50')
+    await blurWith(capFields()[0], '   ')
     expect(sent('/api/admin/coach/config')).toHaveLength(0)
-    expect(capFields()[1].value).toBe('50')
+    expect(capFields()[0].value).toBe('50')
   })
 
   it('an explicit 0 still removes the cap, because that is what the hint promises', async () => {
     await mount()
     await blurWith(capFields()[0], '0')
-    expect(sent('/api/admin/coach/config')[0].body).toEqual({ caps: { perProfileDaily: 0, instanceDaily: 50 } })
+    expect(sent('/api/admin/coach/config')[0].body).toEqual({ caps: { perProfileDaily: 5, instanceDaily: 0 } })
   })
 
   it('the community-medians switch is a separate write and does not carry the caps with it', async () => {

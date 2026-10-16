@@ -5,6 +5,7 @@
    PR 1 stopped at transport and held its answer as `unvalidated`. This PR closes that seam, so
    the assertions below are about what now comes out the other end: a checked bundle, a checked
    change-set, and the two ways a job can fail the validator rather than the parser. */
+import './clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -53,18 +54,6 @@ test('one job per profile at a time', async () => {
   assert.throws(() => jobs.enqueue(uid, { kind: 'review' }), e => e.code === 'busy');
   await settle(uid);
 });
-
-test('the daily cap is enforced and reported as its own failure', async () => {
-  const uid = 'u-cap';
-  writeState(DIR, uid, sampleState());
-  cfg.save({ caps: { perProfileDaily: 1, instanceDaily: 0 } });
-  jobs.enqueue(uid, { kind: 'review' });
-  await settle(uid);
-  assert.throws(() => jobs.enqueue(uid, { kind: 'review' }), e => e.code === 'cap');
-  assert.equal(jobs.capState(uid).used, 1);
-  cfg.save({ caps: { perProfileDaily: 10, instanceDaily: 0 } });
-});
-
 
 test('an answer that stays unusable fails cleanly and applies nothing', async () => {
   const uid = 'u-unusable';
@@ -180,7 +169,6 @@ test('forgetting a profile mid-job cancels the call and frees its slot at once',
     assert.deepEqual(jobs.readUser(uid).pending, null, 'nothing is held for someone who asked to be forgotten');
     assert.deepEqual(jobs.readUser(uid).history, [], 'the record is not recreated');
     assert.deepEqual(notified, [], 'nobody is told about it');
-    assert.equal(jobs.capState(uid).used, 1);
 
     // Single-flight went with the job: the profile can ask again straight away, not once the
     // provider hold is over.

@@ -1,6 +1,7 @@
 /* The admin routes, driven with fake server helpers — the layer between the card and the
  * config store, which learned per-provider keys, a base URL, a model list and the "this
  * provider spawns nothing" report. The user routes are exercised through jobs.test.js. */
+import './clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -100,6 +101,17 @@ test('the admin card is told which providers hold a key, and switching never dro
     assert.equal(r.body.providers.find(p => p.id === 'openai').connected, false);
     assert.equal(r.body.providers.find(p => p.id === 'anthropic').connected, true);
   } finally { mock.close(); }
+});
+
+test('a non-numeric instance cap is refused, never read as "no cap"', async () => {
+  fresh();
+  const { call } = harness();
+  let r = await call('POST /api/admin/coach/config', { caps: { instanceDaily: 7 } });
+  assert.equal(r.status, 200);
+  r = await call('POST /api/admin/coach/config', { caps: { instanceDaily: 'abc' } });
+  assert.equal(r.status, 400);
+  r = await call('GET /api/admin/coach');
+  assert.equal(r.body.caps.instanceDaily, 7);
 });
 
 test('a key filed for a provider that does not take one, or an unknown provider, is refused', async () => {

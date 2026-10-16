@@ -31,6 +31,16 @@ export const HTTP_PROVIDERS = Object.freeze({
     defaultModel: 'gemini-2.5-pro',
     keyPlaceholder: 'AIza… or AQ.…'
   }),
+  // Its own row rather than a `compatible` base URL: a fixed endpoint, a required key, and a
+  // credit balance the settings screens can show (`balance`).
+  openrouter: Object.freeze({
+    label: 'OpenRouter', runtime: 'HTTPS', http: true,
+    apiKeyEnv: 'OPENROUTER_API_KEY', oauthEnv: null,
+    defaultBase: 'https://openrouter.ai/api',
+    defaultModel: 'openrouter/auto',
+    keyPlaceholder: 'sk-or-…',
+    balance: true
+  }),
   // Ollama, LM Studio, vLLM, OpenRouter, a corporate gateway: anything that serves the
   // Chat Completions shape. The base URL is the whole configuration; a key is optional
   // because a model on your own LAN usually has none.

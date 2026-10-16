@@ -4,6 +4,7 @@
  * not read off the capped job log. A scheduled review covers a batch of workouts once, on the
  * workout's own clock rather than the phone's local date, and an answer the model was paid
  * for counts as that review even when it was unusable. */
+import './clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -32,45 +33,29 @@ async function settle(uid, ms = 15000) {
 }
 const lastOutcome = uid => jobs.readUser(uid).history.at(-1);
 
-/* ---------- the per-profile cap survives forget ---------- */
+/* ---------- forget ---------- */
 
-test('forgetting a profile does not hand it a fresh daily cap', async () => {
-  const uid = 'u-forget-cap';
-  writeState(DIR, uid, sampleState());
-  cfg.save({ caps: { perProfileDaily: 1, instanceDaily: 0 } });
-  try {
-    jobs.enqueue(uid, { kind: 'review' });
-    await settle(uid);
-    assert.equal(jobs.capState(uid).used, 1);
-
-    jobs.clearUser(uid);
-    const s = jobs.status(uid);
-    assert.equal(s.pending, null, 'the proposal is gone');
-    assert.deepEqual(jobs.readUser(uid).history, [], 'the history is gone');
-    assert.equal(s.cap.used, 1, 'the day\'s count is a spending record, not the profile\'s data');
-    assert.throws(() => jobs.enqueue(uid, { kind: 'review' }), e => e.code === 'cap');
-  } finally {
-    cfg.save({ caps: { perProfileDaily: 10, instanceDaily: 0 } });
-  }
-});
-
-test('with nothing spent today, forget leaves no file at all', () => {
+test('forget leaves no file at all', () => {
   const uid = 'u-forget-empty';
   jobs.setShare(uid, true);
   assert.ok(fs.existsSync(userFile(uid)));
   jobs.clearUser(uid);
   assert.equal(fs.existsSync(userFile(uid)), false);
+});
 
-  // Yesterday's count is already worth nothing to the cap, so it does not keep the file either.
-  fs.writeFileSync(userFile(uid), JSON.stringify({ daily: { date: '2000-01-01', count: 5 }, history: [] }));
-  jobs.clearUser(uid);
-  assert.equal(fs.existsSync(userFile(uid)), false);
+test('a profile is never refused for how many jobs it ran today', async () => {
+  const uid = 'u-no-profile-cap';
+  writeState(DIR, uid, sampleState());
+  for (let i = 0; i < 12; i++) {
+    jobs.enqueue(uid, { kind: 'review' });
+    await settle(uid);
+  }
 });
 
 /* ---------- the instance cap ---------- */
 
 test('the instance cap is reserved at enqueue, so a job still running already counts', async () => {
-  cfg.save({ caps: { perProfileDaily: 10, instanceDaily: 1 }, daily: null, log: [] });
+  cfg.save({ caps: { instanceDaily: 1 }, daily: null, log: [] });
   try {
     writeState(DIR, 'u-inst-1', sampleState());
     writeState(DIR, 'u-inst-2', sampleState());
@@ -82,14 +67,14 @@ test('the instance cap is reserved at enqueue, so a job still running already co
     assert.equal(lastOutcome('u-inst-1').outcome, 'ready');
     assert.deepEqual(cfg.load().daily, { date: today, count: 1 });
   } finally {
-    cfg.save({ caps: { perProfileDaily: 10, instanceDaily: 0 } });
+    cfg.save({ caps: { instanceDaily: 0 } });
   }
 });
 
 test('the instance count is not bounded by the length of the job log', () => {
   const uid = 'u-inst-150';
   writeState(DIR, uid, sampleState());
-  cfg.save({ caps: { perProfileDaily: 10, instanceDaily: 150 }, daily: { date: today, count: 150 }, log: [] });
+  cfg.save({ caps: { instanceDaily: 150 }, daily: { date: today, count: 150 }, log: [] });
   try {
     assert.throws(() => jobs.enqueue(uid, { kind: 'review' }), e => e.code === 'cap',
       'a hundred and fifty jobs today trip a cap of a hundred and fifty, empty log or not');
@@ -98,7 +83,7 @@ test('the instance count is not bounded by the length of the job log', () => {
     assert.doesNotThrow(() => jobs.enqueue(uid, { kind: 'review' }));
     assert.deepEqual(cfg.load().daily, { date: today, count: 1 });
   } finally {
-    cfg.save({ caps: { perProfileDaily: 10, instanceDaily: 0 } });
+    cfg.save({ caps: { instanceDaily: 0 } });
   }
   return settle(uid);
 });
@@ -131,11 +116,10 @@ test('a scheduled review reads a batch of workouts once, not once per tick', asy
     assert.equal(lastOutcome(uid).trigger, 'scheduled');
 
     // The phone never opened, so lastReview in the synced state is still unset — and the same
-    // workout must not be reviewed again on every tick until the daily cap is gone.
+    // workout must not be reviewed again on every tick every tick.
     tick(); tick(); tick();
     assert.equal(jobs.status(uid).job, null);
     assert.equal(jobs.readUser(uid).history.length, 1);
-    assert.equal(jobs.capState(uid).used, 1);
 
     // A new workout is new news.
     S.workouts.push(newWorkout('w2'));
@@ -184,7 +168,6 @@ test('an answer the model was paid for counts as the review, even when it was un
     assert.equal(lastOutcome(uid).errorClass, 'unusable');
     tick();
     assert.equal(jobs.status(uid).job, null, 'the model read those workouts; sending them again pays twice for the same data');
-    assert.equal(jobs.capState(uid).used, 1);
 
     // A call that never reached the model read nothing, so the same workouts are asked about again.
     process.env.FIXTURE_MODE = 'crash';

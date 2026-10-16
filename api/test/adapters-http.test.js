@@ -443,3 +443,40 @@ test('validateHeaders: small maps pass, framing names and junk do not', () => {
   const many = {}; for (let i = 0; i < 9; i++) many['x-h-' + i] = 'v';
   assert.equal(validateHeaders(many).ok, false);
 });
+
+/* ---------- OpenRouter: fixed endpoint, and the credit balance (account, else the key's own) ---------- */
+const openrouter = (await import('../coach/core/adapters/openrouter.js')).default;
+const orEnv = { OPENROUTER_API_KEY: 'sk-or-1' };
+
+test('OpenRouter: chat and models go to openrouter.ai/api/v1 with a bearer key', async () => {
+  const f = fakeFetch([ok({ data: [{ id: 'openai/gpt-5' }, { id: 'anthropic/claude-opus-5' }] }), ok({ choices: [{ message: { content: ANSWER }, finish_reason: 'stop' }] })]);
+  const m = await openrouter.models({}, orEnv, { fetch: f });
+  assert.deepEqual(m, { ok: true, models: ['anthropic/claude-opus-5', 'openai/gpt-5'] });
+  assert.equal(f.calls[0].url, 'https://openrouter.ai/api/v1/models');
+  assert.equal(f.calls[0].headers.authorization, 'Bearer sk-or-1');
+  const r = await openrouter.invoke({ cfg: {}, prompt: 'P', env: orEnv, model: null, fetch: f });
+  assert.equal(r.code, 0);
+  assert.equal(f.calls[1].url, 'https://openrouter.ai/api/v1/chat/completions');
+  assert.equal(f.calls[1].body.model, 'openrouter/auto');
+});
+
+test('OpenRouter balance: the account total with a management key, else the key limit; no key, no call', async () => {
+  let f = fakeFetch([ok({ data: { total_credits: 100.5, total_usage: 25.75 } })]);
+  assert.deepEqual(await openrouter.balance({}, orEnv, { fetch: f }), { ok: true, scope: 'account', remaining: 74.75, used: 25.75, limit: 100.5 });
+  assert.equal(f.calls[0].url, 'https://openrouter.ai/api/v1/credits');
+
+  f = fakeFetch([{ status: 403, body: { error: { code: 403, message: 'Only management keys can perform this operation' } } }, ok({ data: { usage: 3.2, limit: 10, limit_remaining: 6.8 } })]);
+  assert.deepEqual(await openrouter.balance({}, orEnv, { fetch: f }), { ok: true, scope: 'key', remaining: 6.8, used: 3.2, limit: 10 });
+  assert.equal(f.calls[1].url, 'https://openrouter.ai/api/v1/key');
+
+  f = fakeFetch([{ status: 403, body: {} }, ok({ data: { usage: 1, limit: null, limit_remaining: null } })]);
+  assert.equal((await openrouter.balance({}, orEnv, { fetch: f })).remaining, null, 'an uncapped key has no remaining figure');
+
+  f = fakeFetch([{ status: 401, body: { error: { message: 'bad key' } } }, { status: 401, body: { error: { message: 'bad key' } } }]);
+  assert.deepEqual(await openrouter.balance({}, orEnv, { fetch: f }), { ok: false, error: '401 bad key' });
+
+  f = fakeFetch([]);
+  assert.equal((await openrouter.balance({}, {}, { fetch: f })).ok, false);
+  assert.equal(f.calls.length, 0);
+  assert.equal((await openai.balance({}, env, { fetch: f })).ok, false, 'other providers report no balance');
+});

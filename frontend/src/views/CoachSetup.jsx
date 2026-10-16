@@ -15,7 +15,7 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { t } from '../lib/i18n.js'
 import { MOBILE } from '../lib/mobile.js'
-import { CATEGORY_TEXT } from '../lib/coach.js'
+import { CATEGORY_TEXT, balanceText } from '../lib/coach.js'
 import { getApiKey, setApiKey, clearApiKey } from '../lib/coach-secrets.js'
 import { HTTP_PROVIDERS, HTTP_PROVIDER_IDS, baseUrlFor, validateBaseUrl } from '../../../api/coach/core/providers.js'
 import { DATA_CATEGORIES } from '../../../api/coach/core/categories.js'
@@ -52,6 +52,7 @@ export default function CoachSetup() {
   const [key, setKey] = useState('')
   const [hasKey, setHasKey] = useState(false)
   const [models, setModels] = useState(null)
+  const [balance, setBalance] = useState(null)             // OpenRouter credit, asked fresh
   const [step, setStep] = useState(-1)                     // -1 idle, 0..2 running, 3 done
   const [busy, setBusy] = useState(false)
 
@@ -62,6 +63,14 @@ export default function CoachSetup() {
   useEffect(() => { setModels(null); setModel(coachLocal?.provider === provider ? (coachLocal?.model || '') : '') }, [provider])
 
   const meta = HTTP_PROVIDERS[provider] || {}
+  const refreshBalance = async (k) => {
+    if (!meta.balance) return
+    setBalance(null)
+    const local = await import('../lib/coach-local.js')
+    setBalance(await local.localBalance({ provider }, k || key.trim() || await getApiKey()).catch(e => ({ ok: false, error: e.message })))
+  }
+  // A key already saved for this provider: show what is left without making them list models first.
+  useEffect(() => { setBalance(null); if (choice === 'byok' && hasKey && coachLocal?.provider === provider) refreshBalance() }, [choice, provider, hasKey])
   const host = hostOf(baseUrlFor(provider, { providerOptions: { [provider]: { baseUrl } } }))
   const serverHasCoach = !!(user && config?.coach?.enabled)
 
@@ -90,6 +99,7 @@ export default function CoachSetup() {
       if (!r.ok) { setStep(-1); toast(t('Could not reach the provider: {0}', r.error)); return }
       setModels(r.models)
       setStep(2)
+      refreshBalance(k)
       if (!model && meta.defaultModel && r.models.includes(meta.defaultModel)) setModel(meta.defaultModel)
     } catch (e) {
       setStep(-1); toast(e.message || t('Could not connect'))
@@ -192,6 +202,10 @@ export default function CoachSetup() {
           <span className="small">{s}</span>
         </div>)}
       </div>}
+
+      {meta.balance && (balance || models) && <Section title={t('Balance')}>
+        <Row icon="reset" iconTint="var(--acc)" title={balanceText(balance)} subtitle={t('Tap to refresh')} onClick={() => refreshBalance()} />
+      </Section>}
 
       {models && <Section title={t('Model')}>
         <div style={{ padding: '8px 12px' }}>

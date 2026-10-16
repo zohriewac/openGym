@@ -74,7 +74,17 @@ export const CATEGORY_TEXT = {
   profile: () => [t('What you tell the Coach'), t('Your intake answers, including any limitations or injuries you describe.')],
   prefs: () => [t('A few preferences'), t('Your unit, your language and which effort scale you log.')]
 }
-export const hasConsent = S => !!S?.coach?.consent?.agreedAt && S.coach.consent.version === CONSENT_VERSION
+/** One line for a provider balance ({ ok, scope, remaining, used, limit } from adapter.balance). */
+export function balanceText(b) {
+  if (!b) return t('Checking balance…')
+  if (!b.ok) return t('Balance unavailable: {0}', b.error || '?')
+  const usd = n => '$' + n.toFixed(2)
+  if (b.remaining == null) return t('No limit on this key · {0} used', usd(b.used || 0))
+  return b.scope === 'key' ? t('{0} left on this key · {1} used', usd(b.remaining), usd(b.used || 0))
+    : t('{0} left · {1} used', usd(b.remaining), usd(b.used || 0))
+}
+
+export const hasConsent =S => !!S?.coach?.consent?.agreedAt && S.coach.consent.version === CONSENT_VERSION
 
 /* ============================ plan fingerprint ============================ */
 

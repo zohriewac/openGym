@@ -187,7 +187,6 @@
 }
 .send:active{transform:scale(.92)}
 .send:disabled{opacity:.3}
-.composer-cap{max-width:560px;margin:4px auto 0;text-align:center;font-size:11px;color:var(--label-3)}
 
 /* menu sheet rows reuse .lrow; the cadence sub-sheet reuses Section */
 .chat-menu .lrow-t{font-size:17px}

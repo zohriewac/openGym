@@ -181,6 +181,30 @@ export function httpAdapter(spec) {
       return { ok: true, version: `${schemeOf(base)} · ${hostOf(base)} · ${r.models.length} models`, models: r.models };
     },
 
+    /** Credit left on the account, for a provider whose spec can read it (OpenRouter). Each of
+     *  `spec.balancePaths` is tried in order and the first one that answers wins. */
+    async balance(cfg, env, { fetch: fetchImpl = globalThis.fetch, timeoutMs = 20000, signal } = {}) {
+      if (!spec.balancePaths) return { ok: false, error: 'this provider does not report a balance' };
+      const base = adapter.baseUrl(cfg);
+      if (!base) return { ok: false, error: 'no endpoint configured' };
+      const key = keyOf(env);
+      if (!key) return { ok: false, error: 'no API key configured' };
+      let error = 'unexpected balance shape';
+      for (const path of spec.balancePaths) {
+        let res;
+        try {
+          res = await call(fetchImpl, endpointUrl(base, path), { method: 'GET', headers: { ...extraHeadersFor(id, cfg), ...spec.headers(key) } }, timeoutMs, signal);
+        } catch (e) {
+          return { ok: false, error: e.name === 'AbortError' ? 'timed out' : `could not reach ${hostOf(base)}: ${trim(e.message, 120)}` };
+        }
+        const { data, text } = await readJson(res);
+        if (!res.ok) { error = `${res.status} ${trim(spec.errorMessage(data) || text, 200)}`; continue; }
+        const b = spec.readBalance(data);
+        if (b) return { ok: true, ...b };
+      }
+      return { ok: false, error };
+    },
+
     /** The models this endpoint serves, so a UI can offer a list instead of a text field. */
     async models(cfg, env, { fetch: fetchImpl = globalThis.fetch, timeoutMs = 20000, signal } = {}) {
       const base = adapter.baseUrl(cfg);

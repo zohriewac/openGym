@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutines, effectiveRoutineIds, nextTrainingDay, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
-import { fmtNum, fmtDate, todayISO, isoOf, weekStartOf, weekDayOffset, DAYS, DAYN } from '../lib/format.js'
+import { fmtNum, fmtVol, fmtDate, todayISO, isoOf, weekStartOf, weekDayOffset, DAYS, DAYN } from '../lib/format.js'
 import { t, tn, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, starterPlanSheet, bwDeltaColor, weighInsSheet } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
@@ -15,6 +15,15 @@ import { Button } from '../components/ui.jsx'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import { glyphOf } from '../lib/glyphs.js'
 import { dayNoteOf } from '../lib/day-notes.js'
+import { weightSeries, bodyweightKgOf, isMorningWeighIn } from '../lib/bodyweight.js'
+import { weekVolume, trainingWeeks, topLifts, recentPRs, trailingAvg, restingHrSummary, recoveryGroups } from '../lib/dashboard.js'
+import { fatigueOf } from '../lib/recovery.js'
+import { FATIGUE_LEVELS } from '../lib/recovery-view.js'
+import { MUSCLE_NAME } from '../lib/muscles.js'
+import Ring from '../components/Ring.jsx'
+import WeekSummary from '../components/WeekSummary.jsx'
+import WeekGrid from '../components/WeekGrid.jsx'
+import BodyMap from '../components/BodyMap.jsx'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -92,7 +101,27 @@ export default function Home() {
   // The streak card's fraction: this calendar week's workouts over the weekdays with a plan, or,
   // in a coach week, the queue's sessions and your own days together (lib/queue.js weekTally).
   const { done: doneThisWeek, planned: plannedPerWeek } = weekTally(S, todayISO())
-  const bwPoints = S.bodyweight.slice(-30).map(b => ({ t: b.t || new Date(b.d).getTime(), y: b.w, d: b.d }))
+  const bwPoints = weightSeries(S.bodyweight).slice(-30)
+  // Two curves in one chart: weigh-ins before 10:00 and the rest. The anchors carry the hover tooltip.
+  const bwSince = bwPoints[0]?.t - 1
+  const bwSplit = [
+    { color: 'var(--blue)', points: weightSeries(S.bodyweight, bwSince, isMorningWeighIn) },
+    { color: 'var(--orange)', points: weightSeries(S.bodyweight, bwSince, b => !isMorningWeighIn(b)) },
+  ].filter(s => s.points.length)
+  const bwAnchors = bwPoints.map(p => ({ ...p, note: bwSplit.flatMap(s => s.points).filter(q => q.t === p.t).map(q => fmtNum(q.y) + ' ' + S.unit).join(' · ') }))
+  const bwAvg = bwPoints.length > 1 ? trailingAvg(bwPoints).at(-1).y : null
+  const hasHistory = S.workouts.length > 0
+  const restHr = useMemo(() => restingHrSummary(S.restingHr), [S.restingHr])
+  const vol = useMemo(() => weekVolume(S), [S.workouts, S.weekStart])
+  const grid = useMemo(() => trainingWeeks(S, 12), [S.workouts, S.weekStart])
+  const lifts = useMemo(() => topLifts(S), [S.workouts, S.unit])
+  const prs = useMemo(() => recentPRs(S), [S.workouts, S.unit])
+  const fatigue = useMemo(() => fatigueOf(S.workouts, Date.now(), { bodyweightKg: bodyweightKgOf(S), unit: S.unit }), [S.workouts, S.bodyweight, S.unit])
+  const groups = useMemo(() => recoveryGroups(fatigue), [fatigue])
+  const volMax = Math.max(vol.cur, vol.prev) || 1
+  const pct = v => Math.round(v * 100)
+  const deltaTag = (d, text) => <span className="small row" style={{ gap: 2, fontWeight: 500, color: d > 0 ? 'var(--green)' : 'var(--label-2)' }}>
+    <Icon name={d > 0 ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 12 }} />{text}</span>
 
   // today's session shown right under the week strip
   const onToday = () => { if (S.active) nav('/workout'); else if (todayRoutines.length) startFlow(effectiveRoutineIds(S, todayISO())); else dayOverrideSheet(todayISO()) }
@@ -106,21 +135,7 @@ export default function Home() {
       <button className="iconbtn" onClick={() => nav('/settings')} aria-label={trouble ? t('Settings') + ', ' + t('Connection problem') : t('Settings')}><Icon name="gear" />{trouble && <span className="tab-dot" aria-hidden="true" />}</button>
     </div>
 
-    <div className="card">
-      {/* A coach week runs by order, not by weekday, so its progress row stands in for the
-          seven dots (components/QueueRow.jsx). The today row below stays as it is: the queue's
-          next session reaches it through effectiveRoutineIds like any planned routine. */}
-      {rotating ? (queue ? <QueueRow S={S} today={todayISO()} onStart={onQueueStart} managed={managedQueue} /> : <div className="empty">
-        {t('No rotation yet. Add routines to it in Plan.')}
-        <div style={{ marginTop: 10 }}><Button size="sm" variant="tinted" onClick={() => nav('/plan')}>{t('Set up in Plan')}</Button></div>
-      </div>) : <>
-        <div className="row between" style={{ marginBottom: 8 }}>
-          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
-          <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
-          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
-        </div>
-        <div className="week">{strip}</div>
-      </>}
+    <div className="card dash-hero home-hero">
       {/* Once today's session is logged the row stops asking for it. The week strip already
           knew (its dot goes 'done'); this row did not, so a finished day kept showing the
           routine name behind a green Start tag and read as still outstanding (issue #4).
@@ -145,49 +160,100 @@ export default function Home() {
           : routine ? <span className="tag acc">{t('Start')}</span>
           : <Icon name="plus" className="chev" />}
       </div>
+      {/* A coach week runs by order, not by weekday, so its progress row stands in for the
+          seven dots (components/QueueRow.jsx). The today row below stays as it is: the queue's
+          next session reaches it through effectiveRoutineIds like any planned routine. */}
+      {rotating ? (queue ? <QueueRow S={S} today={todayISO()} onStart={onQueueStart} managed={managedQueue} /> : <div className="empty">
+        {t('No rotation yet. Add routines to it in Plan.')}
+        <div style={{ marginTop: 10 }}><Button size="sm" variant="tinted" onClick={() => nav('/plan')}>{t('Set up in Plan')}</Button></div>
+      </div>) : <>
+        <div className="row between" style={{ marginBottom: 4 }}>
+          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
+          <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
+          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
+        </div>
+        <div className="week">{strip}</div>
+      </>}
       {/* The row above starts today's plan in one tap, and so does the Start button in the tab
           bar — which is the whole problem when you want something else. Both jump straight into
           the planned session whenever there is one, so the Start screen (a freestyle session,
           and your other routines) is only reachable on a day with nothing planned. The one other
           way in, "Choose a different workout" on the weigh-in sheet, does not exist when the
           weigh-in is switched off. This is that door, and it starts nothing on its own. */}
-      {!S.active && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
+      {!S.active && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
         <Button size="sm" variant="ghost" className="dim" icon="swap" onClick={() => nav('/workout')}>
           {t('Choose a different workout')}
         </Button>
       </div>}
     </div>
-
-    {/* Jump to the gym check-in cards (QR membership codes). Shown here as a quick tap on
-        arrival at the gym; folds away per user via the "Gym check-in" switch in Settings. */}
-    {S.checkIn !== false && (
-      <div className="card tappable" style={{ cursor: 'pointer' }} {...tappable(() => nav('/checkin'))}>
-        <div className="row between">
-          <div className="row" style={{ gap: 9 }}>
-            <span className="lrow-i" style={{ background: 'var(--blue)' }}><Icon name="qr" /></span>
-            <div>
-              <div className="lbl2">{t('At the gym')}</div>
-              <div className="ttl">{t('Check in')}</div>
-            </div>
-          </div>
-          <Icon name="chevronRight" className="chev" />
-        </div>
-      </div>
-    )}
+    <WeekSummary />
 
     {!S.routines.length && !S.active && (
-      <div className="card">
-        <div className="row" style={{ gap: 10, marginBottom: 6 }}>
-          <span className="lrow-i"><Icon name="calendar" /></span>
-          <div className="big" style={{ fontSize: 22 }}>{t('Welcome!')}</div>
-        </div>
-        <div className="muted small" style={{ marginBottom: 12 }}>{t('Set up your weekly routine to get going, or grab a ready-made starter plan.')}</div>
+      <div className="card home-welcome">
+        <span className="lrow-i"><Icon name="calendar" /></span>
+        <h2 className="home-welcome-h">{t('Welcome!')}</h2>
+        <div className="muted small">{t('Set up your weekly routine to get going, or grab a ready-made starter plan.')}</div>
         <Button variant="primary" icon="clipboard" onClick={starterPlanSheet}>{t('Load starter plan')}</Button>
-        <div style={{ height: 8 }} /><Button onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
+        <Button variant="ghost" onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
       </div>
     )}
 
-    {S.showWeightCard !== false && <div className="card">
+    {hasHistory && <>
+      <div className="dash-grid">
+        <div className="card tappable home-sec" {...tappable(() => calendarSheet())}>
+          <div className="row" style={{ gap: 10 }}>
+            <Ring value={doneThisWeek} max={plannedPerWeek || doneThisWeek || 1} label={`${doneThisWeek}${plannedPerWeek ? ' / ' + plannedPerWeek : ''} ${t('this week')}`} />
+            <div className="muted small">{doneThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')} · {tn('{0} workout total', '{0} workouts total', S.workouts.length)}</div>
+          </div>
+          <div className="row small muted" style={{ gap: 5, marginTop: 8 }}><Icon name="flame" style={{ color: 'var(--label-2)' }} />{t('{0} week streak', streakWeeks(S))}</div>
+        </div>
+        <div className="card tappable home-sec" {...tappable(() => nav('/stats'))}>
+          <div className="lbl2">{t('Volume')}</div>
+          <div className="dash-num">{fmtVol(vol.cur, S.unit)}</div>
+          <div className="small muted" style={{ marginTop: 6 }}>{t('This week')}</div>
+          <div className="dash-bar" style={{ width: pct(vol.cur / volMax) + '%' }} />
+          <div className="small muted" style={{ marginTop: 6 }}>{t('Last week')}</div>
+          <div className="dash-bar prev" style={{ width: pct(vol.prev / volMax) + '%' }} />
+          {vol.delta !== null && <div style={{ marginTop: 6 }}>{deltaTag(vol.delta, Math.abs(Math.round(vol.delta * 100)) + '%')}</div>}
+        </div>
+      </div>
+
+      <div className="card tappable dash-card home-sec" {...tappable(() => calendarSheet())}>
+        <WeekGrid days={grid.days} label={t('Trained {0} of the last {1} weeks', grid.weeksTrained, 12)} />
+        <div className="muted small" style={{ marginTop: 6 }}>{t('Trained {0} of the last {1} weeks', grid.weeksTrained, 12)}</div>
+      </div>
+
+      {lifts.length > 0 && <div className="card tappable dash-card home-sec" {...tappable(() => nav('/stats'))}>
+        <h2 style={{ marginTop: 0 }}>{t('Strength')}</h2>
+        {lifts.map(l => <div key={l.exId} className="row between" style={{ gap: 10, padding: '6px 0' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="ttl">{l.name}</div>
+            <div className="small muted">{fmtNum(l.est)} {S.unit}</div>
+          </div>
+          {l.points.length > 1 && <div style={{ width: 110 }}><LineChart points={l.points} h={36} axes={false} /></div>}
+          {l.delta !== null && deltaTag(l.delta, fmtNum(Math.abs(l.delta)))}
+        </div>)}
+        {prs.length > 0 && <>
+          <div className="lbl2" style={{ marginTop: 8 }}>{t('Recent records')}</div>
+          <div className="mchips">{prs.map(p => <span key={p.exId} className="mchip"><Icon name="trophy" style={{ fontSize: 12 }} /> {p.name} · {fmtNum(p.est)}</span>)}</div>
+        </>}
+      </div>}
+
+      <div className="card tappable dash-card home-sec" {...tappable(() => nav('/stats'))}>
+        <h2 style={{ marginTop: 0 }}>{t('Recovery')}</h2>
+        <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+          <BodyMap className="dash-bm hm-fatigue" load={fatigue} thresholds={FATIGUE_LEVELS} body={S.body} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {[['ready', 'Ready', 'var(--green)'], ['recovering', 'Recovering', 'var(--orange)'], ['fatigued', 'Fatigued', 'var(--red)']].filter(([k]) => groups[k].length).map(([k, label, color]) =>
+              <div key={k} className="small" style={{ margin: '4px 0' }}>
+                <span className="dash-dot" style={{ background: color }} /> <b>{t(label)}</b>: {groups[k].slice(0, 4).map(m => t(MUSCLE_NAME[m] || m)).join(', ')}{groups[k].length > 4 ? ` +${groups[k].length - 4}` : ''}
+              </div>)}
+          </div>
+        </div>
+      </div>
+    </>}
+
+    {S.showWeightCard !== false && <div className="card home-sec">
       <div className="row between bw-head" style={{ marginBottom: 6 }}>
         <h2 style={{ margin: 0 }}>{t('Body weight')}</h2>
         <div className="row" style={{ gap: 8 }}>
@@ -213,7 +279,16 @@ export default function Home() {
             <span>{t('Goal')} {fmtNum(S.targetW)} {S.unit} · {Math.abs(S.targetW - bw.w) < 0.05 ? t('reached!') : t(S.targetW > bw.w ? '{0} to gain' : '{0} to lose', fmtNum(Math.abs(S.targetW - bw.w)) + ' ' + S.unit)}</span>
           </div>
         )}
-        <div className="chart" style={{ marginTop: 8 }}><LineChart points={bwPoints} h={130} unit={S.unit} goal={S.targetW} /></div>
+        {bwAvg !== null && <div className="small muted" style={{ marginTop: 4 }}>{t('7-day avg')}: {fmtNum(bwAvg)} {S.unit}</div>}
+        <div className="chart" style={{ marginTop: 8 }}><LineChart points={bwAnchors} series={bwSplit} h={130} unit={S.unit} goal={S.targetW} /></div>
+        <div className="small muted row" style={{ gap: 12, marginTop: 4 }}>
+          <span className="row" style={{ gap: 4 }}><span style={{ color: 'var(--blue)' }}>●</span>{'< 10:00'}</span>
+          <span className="row" style={{ gap: 4 }}><span style={{ color: 'var(--orange)' }}>●</span>{t('Later')}</span>
+        </div>
+        {restHr && <div className="row between" style={{ marginTop: 8 }}>
+          <div className="row" style={{ gap: 6 }}><Icon name="heart" style={{ color: 'var(--red)' }} /><span className="small">{t('Resting heart rate')}</span></div>
+          <div className="row" style={{ gap: 8 }}><b>{restHr.last.bpm} bpm</b>{restHr.delta !== null && !!Math.round(restHr.delta) && <span className="small muted">{restHr.delta > 0 ? '+' : '−'}{Math.abs(Math.round(restHr.delta))}</span>}</div>
+        </div>}
         {/* every weigh-in, week by week with its average (Discord 'Weight') */}
         <div className="row" style={{ justifyContent: 'flex-end', marginTop: 4 }}>
           <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={weighInsSheet}>{t('All weigh-ins')}</Button>
@@ -223,17 +298,21 @@ export default function Home() {
         : t("No weigh-ins yet. Log your weight to start the curve (we also ask before every workout).")}</div>}
     </div>}
 
-    <div className="card tappable" style={{ cursor: 'pointer' }} {...tappable(() => calendarSheet())}>
-      <div className="row between">
-        <div>
-          <div className="row" style={{ gap: 7, fontSize: 22, fontWeight: 600, letterSpacing: '-.021em' }}>
-            <Icon name="flame" style={{ color: 'var(--orange)' }} />
-            {t('{0} week streak', streakWeeks(S))}
+    {/* Jump to the gym check-in cards (QR membership codes). Shown here as a quick tap on
+        arrival at the gym; folds away per user via the "Gym check-in" switch in Settings. */}
+    {S.checkIn !== false && (
+      <div className="card tappable home-sec" style={{ cursor: 'pointer' }} {...tappable(() => nav('/checkin'))}>
+        <div className="row between">
+          <div className="row" style={{ gap: 9 }}>
+            <span className="lrow-i" style={{ background: 'var(--blue)' }}><Icon name="qr" /></span>
+            <div>
+              <div className="lbl2">{t('At the gym')}</div>
+              <div className="ttl">{t('Check in')}</div>
+            </div>
           </div>
-          <div className="muted small" style={{ marginTop: 2 }}>{doneThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')} · {tn('{0} workout total', '{0} workouts total', S.workouts.length)}</div>
+          <Icon name="chevronRight" className="chev" />
         </div>
-        <Icon name="calendar" className="chev" style={{ fontSize: 20 }} />
       </div>
-    </div>
+    )}
   </div>
 }
