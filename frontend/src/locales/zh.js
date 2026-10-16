@@ -166,6 +166,7 @@ export default {
   'Volume': '总量',
   'PRs': '纪录',
   'New PR:': '新纪录：',
+  'New PR: {0} {1}': '新纪录： {0} {1}',
   'Nice!': '太棒了！',
   'Nothing logged yet': '还没有记录',
   'You haven’t checked off any sets. Finish the workout anyway?': '你还没有勾选任何组。仍要结束训练吗？',

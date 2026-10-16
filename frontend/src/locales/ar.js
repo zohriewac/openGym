@@ -170,6 +170,7 @@ export default {
   'Volume': 'حجم التدريب',
   'PRs': 'الأرقام القياسية',
   'New PR:': 'رقم قياسي جديد:',
+  'New PR: {0} {1}': 'رقم قياسي جديد: {0} {1}',
   'Nice!': 'رائع!',
   'Nothing logged yet': 'لم يتم تسجيل أي شيء بعد',
   'You haven’t checked off any sets. Finish the workout anyway?': 'لم تحدد أي مجموعة كمكتملة. هل تريد إنهاء التمرين على أي حال؟',

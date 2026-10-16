@@ -166,6 +166,7 @@ export default {
   'Volume': 'Hacim',
   'PRs': 'Rekorlar',
   'New PR:': 'Yeni rekor:',
+  'New PR: {0} {1}': 'Yeni rekor: {0} {1}',
   'Nice!': 'Süper!',
   'Nothing logged yet': 'Henüz kayıt yok',
   'You haven’t checked off any sets. Finish the workout anyway?': 'Hiç set işaretlemedin. Yine de antrenman bitsin mi?',

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { nextTrainingDay, modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, freestyleConfig, exLine, workoutVolume, bestWeightFor, bestWeightForEntry, completedRepsOf, metricRowsForEntry, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, cascadeWeight, insertWarmupRow, makeWarmupAt, canBeWarmup, makeWorkAt, removeRowAt, removeLastSet, setSpanAt, workSetsDone, setsDone, setsDoneActive, setUnits, doneUnits, setUnitsTotal, pairAdjacent, unpairSuperset, supersetUnits, sessionSections, applyIntensifierPlan, pinnedNoteFor, exNoteFor, effectiveRoutineIds, effectiveRoutines, effectiveRoutineId, effectiveRoutine, lastEntryFor, entryExcluded, entryRoutineId, setsRepsOf } from './history.js'
+import { nextTrainingDay, modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, freestyleConfig, exLine, workoutVolume, bestWeightFor, bestWeightForEntry, completedRepsOf, metricRowsForEntry, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, cascadeWeight, insertWarmupRow, makeWarmupAt, canBeWarmup, makeWorkAt, removeRowAt, removeLastSet, setSpanAt, workSetsDone, setsDone, setsDoneActive, setUnits, doneUnits, setUnitsTotal, pairAdjacent, unpairSuperset, supersetUnits, sessionSections, applyIntensifierPlan, pinnedNoteFor, exNoteFor, effectiveRoutineIds, effectiveRoutines, effectiveRoutineId, effectiveRoutine, lastEntryFor, entryExcluded, entryRoutineId, setsRepsOf, prevSetAt } from './history.js'
 import { makeSideSet, setSideField, toggleSide, WEIGHT_ORIGIN_MANUAL } from './workout-model.js'
 import { EXDB } from './exercises.js'
 import { todayISO, isoOf } from './format.js'
@@ -1654,5 +1654,29 @@ describe('timed per-side pairs come off as a pair', () => {
     expect(removeRowAt(pairs(3), 2).map(r => r.side + r.k)).toEqual(['L0', 'R0', 'L2', 'R2'])
     expect(removeRowAt(pairs(3), 3).map(r => r.side + r.k)).toEqual(['L0', 'R0', 'L2', 'R2'])
     expect(setSpanAt([{ sec: 30, side: 'L' }, { sec: 30 }], 0)).toEqual([0, 1])
+  })
+})
+
+describe('prevSetAt', () => {
+  const last = {
+    d: '2026-10-01',
+    target: { id: 'bench-press', mode: 'reps', reps: 5 },
+    sets: [{ w: 80, r: 5, done: true }, { w: 80, r: 4, done: true }],
+  }
+  it('is null with no last session or an index out of range', () => {
+    expect(prevSetAt(null, 0)).toBeNull()
+    expect(prevSetAt(last, 2)).toBeNull()
+    expect(prevSetAt(last, -1)).toBeNull()
+  })
+  it('reads the same-index set in the style of setLabel', () => {
+    expect(prevSetAt(last, 1)).toBe(setLabel('bench-press', last.sets[1], last.target))
+    expect(prevSetAt(last, 0)).toContain('80')
+  })
+  it('formats timed and bodyweight sets', () => {
+    const hold = { target: { id: 'plank', mode: 'time', sec: 60 }, sets: [{ sec: 45, done: true }] }
+    expect(prevSetAt(hold, 0)).toBe(fmtSec(45))
+    const bw = { target: { id: 'pull-up', mode: 'reps', bodyweight: true }, sets: [{ w: 0, r: 8, done: true }] }
+    expect(prevSetAt(bw, 0)).toBe(setLabel('pull-up', bw.sets[0], bw.target))
+    expect(prevSetAt(bw, 0)).toContain('8')
   })
 })

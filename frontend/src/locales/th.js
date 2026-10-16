@@ -164,6 +164,7 @@ export default {
   'Volume': 'ปริมาณงาน',
   'PRs': 'สถิติใหม่',
   'New PR:': 'สถิติใหม่:',
+  'New PR: {0} {1}': 'สถิติใหม่: {0} {1}',
   'Nice!': 'เยี่ยม!',
   'Nothing logged yet': 'ยังไม่มีการบันทึก',
   'You haven’t checked off any sets. Finish the workout anyway?': 'คุณยังไม่ได้ติ๊กเซ็ตไหนเลย จะจบการออกกำลังกายเลยไหม?',

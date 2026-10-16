@@ -164,6 +164,7 @@ export default {
   'Volume': 'Volumen',
   'PRs': 'Rekordok',
   'New PR:': 'Új rekord:',
+  'New PR: {0} {1}': 'Új rekord: {0} {1}',
   'Nice!': 'Szuper!',
   'Nothing logged yet': 'Még nincs rögzítve semmi',
   'You haven’t checked off any sets. Finish the workout anyway?': 'Még egyetlen sorozatot sem pipáltál ki. Mindenképp befejezed az edzést?',

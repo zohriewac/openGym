@@ -363,6 +363,12 @@ export function lastEntryFor(S, exId, rid) {
   return lastEntryIn(S, exId, null)
 }
 
+/** A short label for set `i` of a `lastEntryFor` result ("80×5"), or null when there is none. */
+export function prevSetAt(last, i, exId, speedUnit) {
+  const s = last?.sets?.[i]
+  return s ? setLabel(exId ?? last.target?.id, s, last.target, speedUnit) : null
+}
+
 function lastEntryIn(S, exId, rid) {
   const workouts = S.workouts || []
   for (let i = workouts.length - 1; i >= 0; i--) {

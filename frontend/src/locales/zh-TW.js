@@ -162,6 +162,7 @@ export default {
   'Volume': '總訓練量',
   'PRs': '個人紀錄',
   'New PR:': '突破個人紀錄：',
+  'New PR: {0} {1}': '突破個人紀錄： {0} {1}',
   'Nice!': '太棒了！',
   'Nothing logged yet': '尚未記錄任何內容',
   'You haven’t checked off any sets. Finish the workout anyway?': '你尚未勾選任何組數。仍要結束訓練嗎？',
