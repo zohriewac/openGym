@@ -135,20 +135,6 @@ export default function Home() {
     </div>
 
     <div className="card dash-hero">
-      {/* A coach week runs by order, not by weekday, so its progress row stands in for the
-          seven dots (components/QueueRow.jsx). The today row below stays as it is: the queue's
-          next session reaches it through effectiveRoutineIds like any planned routine. */}
-      {rotating ? (queue ? <QueueRow S={S} today={todayISO()} onStart={onQueueStart} managed={managedQueue} /> : <div className="empty">
-        {t('No rotation yet. Add routines to it in Plan.')}
-        <div style={{ marginTop: 10 }}><Button size="sm" variant="tinted" onClick={() => nav('/plan')}>{t('Set up in Plan')}</Button></div>
-      </div>) : <>
-        <div className="row between" style={{ marginBottom: 8 }}>
-          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
-          <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
-          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
-        </div>
-        <div className="week">{strip}</div>
-      </>}
       {/* Once today's session is logged the row stops asking for it. The week strip already
           knew (its dot goes 'done'); this row did not, so a finished day kept showing the
           routine name behind a green Start tag and read as still outstanding (issue #4).
@@ -173,13 +159,27 @@ export default function Home() {
           : routine ? <span className="tag acc">{t('Start')}</span>
           : <Icon name="plus" className="chev" />}
       </div>
+      {/* A coach week runs by order, not by weekday, so its progress row stands in for the
+          seven dots (components/QueueRow.jsx). The today row below stays as it is: the queue's
+          next session reaches it through effectiveRoutineIds like any planned routine. */}
+      {rotating ? (queue ? <QueueRow S={S} today={todayISO()} onStart={onQueueStart} managed={managedQueue} /> : <div className="empty">
+        {t('No rotation yet. Add routines to it in Plan.')}
+        <div style={{ marginTop: 10 }}><Button size="sm" variant="tinted" onClick={() => nav('/plan')}>{t('Set up in Plan')}</Button></div>
+      </div>) : <>
+        <div className="row between" style={{ marginBottom: 4 }}>
+          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
+          <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
+          <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
+        </div>
+        <div className="week">{strip}</div>
+      </>}
       {/* The row above starts today's plan in one tap, and so does the Start button in the tab
           bar — which is the whole problem when you want something else. Both jump straight into
           the planned session whenever there is one, so the Start screen (a freestyle session,
           and your other routines) is only reachable on a day with nothing planned. The one other
           way in, "Choose a different workout" on the weigh-in sheet, does not exist when the
           weigh-in is switched off. This is that door, and it starts nothing on its own. */}
-      {!S.active && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
+      {!S.active && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
         <Button size="sm" variant="ghost" className="dim" icon="swap" onClick={() => nav('/workout')}>
           {t('Choose a different workout')}
         </Button>
@@ -222,7 +222,7 @@ export default function Home() {
             <Ring value={doneThisWeek} max={plannedPerWeek || doneThisWeek || 1} label={`${doneThisWeek}${plannedPerWeek ? ' / ' + plannedPerWeek : ''} ${t('this week')}`} />
             <div className="muted small">{doneThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')} · {tn('{0} workout total', '{0} workouts total', S.workouts.length)}</div>
           </div>
-          <div className="row small" style={{ gap: 5, marginTop: 8 }}><Icon name="flame" style={{ color: 'var(--orange)' }} />{t('{0} week streak', streakWeeks(S))}</div>
+          <div className="row small muted" style={{ gap: 5, marginTop: 8 }}><Icon name="flame" style={{ color: 'var(--label-2)' }} />{t('{0} week streak', streakWeeks(S))}</div>
         </div>
         <div className="card tappable" {...tappable(() => nav('/stats'))}>
           <div className="lbl2">{t('Volume')}</div>
