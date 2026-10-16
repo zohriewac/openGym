@@ -7,7 +7,7 @@ Deploy: server `gymserver` (ssh alias), `~/opengym`, `git pull && docker compose
       `OpenGym/Sources/OpenGym/WidgetBridge.swift` to app group `group.com.zohriewac.opengym`
       (key `snapshot`) and read in `OpenGym/Sources/OpenGymWidget/OpenGymWidget.swift`.
       Check: app group entitlement on both targets, that the web side actually calls the bridge,
-      and that the widget timeline reloads after a write. Bundle ID changed from `com.viktor.opengym`
+      and that the widget timeline reloads after a write. Bundle ID changed
       on 2026-10-16 — reinstall and re-add the widget.
 - [ ] **AI coach breaks when the phone is locked/closed.** Requests die when the app is
       backgrounded. Move to server-side handling: the server runs the coach job to completion and
