@@ -34,6 +34,8 @@ import { confirmSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 import LineChart from '../components/LineChart.jsx'
+import CoachText from '../components/CoachText.jsx'
+import * as coachApi from '../lib/coach-api.js'
 import { Button, Check, Switch, Section, Row, SelectRow } from '../components/ui.jsx'
 import '../coach.css'
 
@@ -51,6 +53,7 @@ export default function CoachChat() {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const endRef = useRef(null)
+  const [away, setAway] = useState(false)
   const prevJob = useRef(null)
   const coachMode = coachLocal?.mode
 
@@ -96,6 +99,13 @@ export default function CoachChat() {
 
   useEffect(() => { if (typeof endRef.current?.scrollIntoView === 'function') endRef.current.scrollIntoView({ block: 'end' }) }, [S.coach?.chat?.length, !!job, !!pending])
 
+  // Show "jump to latest" once the reader has scrolled well away from the newest message.
+  useEffect(() => {
+    const on = () => setAway(document.documentElement.scrollHeight - window.innerHeight - window.scrollY > 240)
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
+
   if (!ready) return null
   const coach = S.coach || emptyCoach()
   const community = !!config?.coach?.community && !DEMO && !(MOBILE && coachMode === 'byok')
@@ -135,6 +145,23 @@ export default function CoachChat() {
   const askDebrief = () => ask(() => requestDebrief(lastWorkout?.id || null), lastWorkout?.name
     ? t('How did my {0} session go?', lastWorkout.name)
     : t('How did my last workout go?'))
+  const askPrompt = label => ask(() => requestReview(label), label)
+  // Retry re-asks the last thing the person said; with nothing to repeat it asks for a review.
+  const retry = () => {
+    const last = [...(coach.chat || [])].reverse().find(m => m.role === 'user' && m.kind === 'text')
+    return last ? askPrompt(last.text) : askReview()
+  }
+  // Feature-checked: the cancel call arrives with the newer coach-api; before that there is no Stop.
+  const cancelFn = (() => { try { return coachApi.cancelJob } catch { return undefined } })()
+  const stop = async () => {
+    try { await cancelFn(); refresh() } catch (e) { toast(JOB_ERRORS[e.data?.code] || e.message || t('Could not ask the Coach')) }
+  }
+  const clearChat = () => confirmSheet({
+    title: t('Clear the conversation?'),
+    message: t('This removes the messages on this screen. What the Coach proposed stays under “Everything the Coach proposed”.'),
+    confirmText: t('Clear'),
+    onConfirm: () => { update(s => { s.coach.chat = (s.coach.chat || []).filter(m => m.kind === 'intake') }); toast(t('Conversation cleared')) }
+  })
   const askNewPlan = () => ask(() => requestPlan(coach.profile), t('Build me a fresh plan from my answers.'))
   const askImprove = r => ask(
     () => requestReview(t('Focus only on my routine “{0}”. Improve it: exercise choice, order, sets and reps, rep ranges, progression. Leave the other routines alone.', r.name)),
@@ -162,6 +189,7 @@ export default function CoachChat() {
       {community && <Row icon="person" iconTint="var(--teal)" title={t('Compare with others here')} subtitle={t('Anonymous medians from this instance')} accessory="chevron" onClick={() => { close(); showCohort() }} />}
       <Row icon="history" iconTint="var(--blue)" title={t('Everything the Coach proposed')} subtitle={t('Plans, suggestions and debriefs, kept')} accessory="chevron" onClick={() => { close(); showHistory() }} />
       {idle && <Row icon="clipboard" iconTint="var(--indigo)" title={t('Start a new plan')} subtitle={t('A fresh plan from your answers; your workouts stay')} accessory="chevron" onClick={() => { close(); askNewPlan() }} />}
+      <Row icon="trash" iconTint="var(--red)" title={t('Clear the conversation')} accessory="chevron" onClick={() => { close(); clearChat() }} />
       <Row icon="pencil" iconTint="var(--indigo)" title={t('Edit my answers')} subtitle={t('Goal, days, equipment, limits')} accessory="chevron" onClick={() => closeThenNav(close, '/coach/intake?edit=1')} />
       <Row icon="clock" iconTint="var(--purple)" title={t('Automatic reviews')} subtitle={cadenceLabel(coach)} accessory="chevron" onClick={() => { close(); cadenceSheet(openSheet, update) }} />
       {canRevert(S) && <Row icon="reset" iconTint="var(--blue)" title={t('Undo the last Coach changes')} accessory="chevron" onClick={() => { close(); doRevert() }} />}
@@ -180,6 +208,13 @@ export default function CoachChat() {
     }
   })
 
+  const empty = idle && !pending && !(coach.chat || []).some(m => m.kind !== 'intake')
+  const PROMPTS = [
+    { k: 'review', icon: 'sparkles', label: t('Review my training'), run: askReview },
+    ...(lastWorkout ? [{ k: 'last', icon: 'checkCircle', label: t('Review my last workout'), run: askDebrief }] : []),
+    ...((S.routines || []).length ? [{ k: 'adj', icon: 'wrench', label: t('Adjust my plan'), run: () => askPrompt(t('Adjust my plan')) }] : []),
+    { k: 'stall', icon: 'lightbulb', label: t('Why did my bench stall?'), run: () => askPrompt(t('Why did my bench stall?')) },
+  ]
   const status = job ? t('thinking…') : pending ? t('has a suggestion for you') : t('here when you need it')
   const placeholder = pending?.kind === 'create'
     ? t('What should change?')
@@ -196,12 +231,23 @@ export default function CoachChat() {
       <button className="iconbtn" onClick={menu} aria-label={t('More')}><Icon name="more" /></button>
     </div>
 
-    <div className="msgs">
+    <div className="ctx-row" role="list" aria-label={t('What the Coach reads')}>
+      <span className="ctx-chip" role="listitem">{tn('{0} workout', '{0} workouts', (S.workouts || []).length)}</span>
+      <span className="ctx-chip" role="listitem">{tn('{0} routine', '{0} routines', (S.routines || []).length)}</span>
+      {!!(S.bodyweight || []).length && <span className="ctx-chip" role="listitem">{t('Body weight')}</span>}
+    </div>
+
+    <div className="msgs" aria-live="polite">
       <Bubble role="coach">{t('Hi, I’m your Coach. I build your plan from your answers and adjust it from what you actually log. Nothing changes until you say so.')}</Bubble>
 
-      {(coach.chat || []).map(m => <Message key={m.id} m={m} S={S} profile={coach.profile} openSheet={openSheet} />)}
+      {(coach.chat || []).map((m, i, a) => <Message key={m.id} m={m} S={S} profile={coach.profile} openSheet={openSheet} onRetry={i === a.length - 1 && idle && !busy ? retry : null} />)}
 
-      {job && <Typing S={S} kind={job.kind} coachLocal={coachLocal} config={config} />}
+      {empty && <div className="chat-start">
+        <p>{t('Ask me about your training, or start with one of these.')}</p>
+        {PROMPTS.map(p => <button key={p.k} className="qchip" onClick={p.run}><Icon name={p.icon} />{p.label}</button>)}
+      </div>}
+
+      {job && <Typing S={S} kind={job.kind} coachLocal={coachLocal} config={config} onStop={cancelFn ? stop : null} />}
 
       {pending && !job && (pending.kind === 'create'
         ? <PlanCard p={pending} S={S} update={update} toast={toast} nav={nav} refresh={refresh} />
@@ -213,9 +259,11 @@ export default function CoachChat() {
     </div>
 
     <div className="composer">
+      {away && <button className="jump" onClick={() => endRef.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' })} aria-label={t('Jump to latest')}><Icon name="arrowDown" /></button>}
       {idle && !busy && <div className="chips-row">
         <button className="qchip" onClick={askReview}><Icon name="sparkles" />{t('Review my training')}</button>
         {!!lastWorkout && <button className="qchip" onClick={askDebrief}><Icon name="checkCircle" />{t('Last workout')}</button>}
+        <button className="qchip" onClick={() => askPrompt(t('Why did my bench stall?'))}><Icon name="lightbulb" />{t('Why did my bench stall?')}</button>
         {!!(S.routines || []).length && <button className="qchip" onClick={pickRoutine}><Icon name="wrench" />{t('Improve a routine')}</button>}
         {community && <button className="qchip" onClick={showCohort}><Icon name="person" />{t('Compare')}</button>}
       </div>}
@@ -240,7 +288,7 @@ function Bubble({ role, kind, at, children }) {
   </div>
 }
 
-function Message({ m, S, profile, openSheet }) {
+function Message({ m, S, profile, openSheet, onRetry }) {
   if (m.kind === 'intake') {
     const lines = profileLines(profile)
     return <Bubble role="user" at={m.at}>
@@ -256,8 +304,14 @@ function Message({ m, S, profile, openSheet }) {
       {m.at && <div className="msg-t">{stamp(m.at)}</div>}
     </div>
   }
-  if (m.kind === 'reverted' || m.kind === 'nochange' || m.kind === 'error' || m.kind === 'text') {
-    return <Bubble role={m.role} kind={m.kind} at={m.at}>{m.text}</Bubble>
+  if (m.kind === 'error') {
+    return <Bubble role={m.role} kind={m.kind} at={m.at}>
+      <div role="alert">{m.text}</div>
+      {onRetry && <button className="retry" onClick={onRetry}><Icon name="reset" />{t('Try again')}</button>}
+    </Bubble>
+  }
+  if (m.kind === 'reverted' || m.kind === 'nochange' || m.kind === 'text') {
+    return <Bubble role={m.role} kind={m.kind} at={m.at}>{m.role === 'coach' ? <CoachText text={m.text} /> : m.text}</Bubble>
   }
   return null
 }
@@ -269,7 +323,7 @@ const stamp = at => {
   return d.toDateString() === today.toDateString() ? time : fmtDate(d.toISOString().slice(0, 10)) + ' · ' + time
 }
 
-function Typing({ S, kind, coachLocal, config }) {
+function Typing({ S, kind, coachLocal, config, onStop }) {
   const ms = estimateMs(S)
   // "Local" on either side: the phone's own OpenAI-compatible endpoint, or the server's —
   // /api/config names the provider, and a model on the owner's box is nothing like a cloud API.
@@ -285,12 +339,13 @@ function Typing({ S, kind, coachLocal, config }) {
   }
   const doing = kind === 'create' ? t('Building your plan…') : kind === 'debrief' ? t('Looking at that session…') : t('Reading your training…')
   return <div className="msg coach">
-    <div className="bub typing"><i /><i /><i /></div>
+    <div className="bub typing" role="status" aria-label={doing}><i /><i /><i /></div>
     <div className="typing-eta">
       {doing} {eta}
       {local ? ' ' + t('A local model can take longer.') : ''}
       {' ' + t('Feel free to leave, it keeps going.')}
     </div>
+    {onStop && <button className="retry" onClick={onStop}>{t('Stop')}</button>}
   </div>
 }
 

@@ -1403,6 +1403,16 @@ export const PT_BR_OVERRIDES = {
   'Gentle, for headphones or a quiet room.': 'Suave, para fones de ouvido ou um lugar silencioso.',
   'Fewer than two workouts in this period. Pick a longer one.': 'Menos de dois treinos neste período. Escolha um mais longo.',
   'Releases are checked on GitHub. The download is verified against its checksum before the installer opens.': 'As versões são verificadas no GitHub. O download é conferido pela soma de verificação antes de abrir o instalador.',
+  'Why did my bench stall?': 'Por que meu supino estagnou?',
+  'Adjust my plan': 'Ajustar meu plano',
+  'Jump to latest': 'Ir para a mais recente',
+  'Clear the conversation?': 'Limpar a conversa?',
+  'This removes the messages on this screen. What the Coach proposed stays under “Everything the Coach proposed”.': 'Isso remove as mensagens desta tela. O que o Coach propôs continua em “Tudo o que o Coach propôs”.',
+  'Clear the conversation': 'Limpar a conversa',
+  'Conversation cleared': 'Conversa limpa',
+  'What the Coach reads': 'O que o Coach lê',
+  'Ask me about your training, or start with one of these.': 'Pergunte sobre seu treino ou comece por um destes.',
+  'Stop': 'Parar',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
