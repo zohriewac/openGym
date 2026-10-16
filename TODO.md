@@ -14,15 +14,17 @@ Deploy: server `gymserver` (ssh alias), `~/opengym`, `git pull && docker compose
       xtool-org/xtool#284), so app and widget each get private storage. Also see xtool#313 (widget
       .appex dead-stripped). Next: check `FileManager.containerURL(forSecurityApplicationGroupIdentifier:)`
       on device; if nil → paid account, or xtool with #284, or a non-group sharing path.
-- [ ] **Rep wheel picker with haptics** — in progress (scroll-snap number wheel on the reps cell,
+- [x] **Rep wheel picker with haptics** — done, needs device check (scroll-snap number wheel on the reps cell,
       native `haptic` bridge on iOS).
-- [ ] **AI coach breaks when the phone is locked/closed.** Requests die when the app is
+- [x] **AI coach breaks when the phone is locked/closed.** Requests die when the app is
       backgrounded. Move to server-side handling: the server runs the coach job to completion and
       caches the result, the client re-fetches it on resume instead of holding the request open.
-      Start in `api/coach/jobs.js` / `api/coach/routes.js` and `frontend/src/lib/coach-api.js`.
-- [ ] **Dashboard: cleaner, more professional look.** Home dashboard (`frontend/src/views/Home.jsx`,
-      `components/Ring.jsx`, `components/WeekGrid.jsx`, `lib/dashboard.js`).
-- [ ] **Failing frontend tests on `ios-widgets`** (Node 22, `cd frontend && npm test`; Node 26
+      Done (cd7b3841): requestId dedupe, persisted awaited job, resume on visible. Own-key
+      phone mode still loses in-flight calls (aborted after resume). Start in `api/coach/jobs.js` / `api/coach/routes.js` and `frontend/src/lib/coach-api.js`.
+- [x] **Dashboard: cleaner, more professional look.** Home dashboard (`frontend/src/views/Home.jsx`,
+      `components/Ring.jsx`, `components/WeekGrid.jsx`, `lib/dashboard.js`). Light polish done (ac57f2da); lower cards (Strength,
+      Recovery, Body weight) not restyled yet.
+- [x] **Failing frontend tests on `ios-widgets`** (Node 22, `cd frontend && npm test`; Node 26
       breaks happy-dom's localStorage, use 22):
       `views/AdminCoach.test.jsx` (5 daily-cap tests), `views/CoachSetup.test.jsx`
       ("the categories module carries no catalogue"), `lib/workout-at.test.js`
