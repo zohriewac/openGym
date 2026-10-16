@@ -2175,3 +2175,14 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 }
 @keyframes pr-ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.2);opacity:0}}
 .set-prev{color:var(--label-3);font-size:var(--fs-xs);font-variant-numeric:tabular-nums}
+
+/* --- week summary (WeekSummary.jsx) --- */
+.week-summary{padding:var(--sp-4)}
+.week-summary .sec{margin:0 0 var(--sp-3)}
+.ws-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-4) var(--sp-3)}
+.ws-v{font-size:var(--fs-2xl);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--sp-2)}
+.ws-of{color:var(--label-3);font-weight:500}
+.ws-l{margin-top:2px;font-size:var(--fs-xs);color:var(--label-3)}
+.ws-delta{font-size:var(--fs-xs);font-weight:600}
+.ws-delta.up{color:var(--green)}
+.ws-delta.down{color:var(--red)}

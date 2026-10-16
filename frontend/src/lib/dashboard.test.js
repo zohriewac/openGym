@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { weekVolume, trainingWeeks, topLifts, recentPRs, trailingAvg, restingHrSummary, recoveryGroups } from './dashboard.js'
+import { weekVolume, trainingWeeks, topLifts, recentPRs, trailingAvg, restingHrSummary, recoveryGroups, weekSummary } from './dashboard.js'
 import { bodyweightKgOf } from './bodyweight.js'
 
 const set = (w, r) => ({ w, r, done: true })
@@ -66,5 +66,21 @@ describe('small helpers', () => {
   it('bodyweightKgOf converts lb', () => {
     expect(bodyweightKgOf({ unit: 'lb', bodyweight: [{ d: '2026-10-01', w: 200 }] })).toBeCloseTo(90.718, 2)
     expect(bodyweightKgOf({ unit: 'kg', bodyweight: [] })).toBeNull()
+  })
+})
+
+describe('weekSummary', () => {
+  const base = { ...S0, routines: [], week: {} }
+  it('is all zero for an empty state', () => {
+    expect(weekSummary(base, '2026-10-15')).toEqual({ sessionsDone: 0, sessionsPlanned: 0, volume: 0, volumePrev: 0, volumeDelta: null, streak: 0, prsThisWeek: 0 })
+  })
+  it('sums a normal week against the last one and counts its PRs', () => {
+    const S = { ...base, workouts: [wo('2026-10-06', 'bench', [set(100, 4)]), wo('2026-10-12', 'bench', [set(100, 5)]), wo('2026-10-14', 'bench', [set(110, 5)])] }
+    const r = weekSummary(S, '2026-10-15')
+    expect(r).toMatchObject({ sessionsDone: 2, volume: 1050, volumePrev: 400, prsThisWeek: 1 })
+    expect(r.volumeDelta).toBeCloseTo(1.625)
+  })
+  it('delta is null when last week was empty', () => {
+    expect(weekSummary({ ...base, workouts: [wo('2026-10-12', 'bench', [set(100, 5)])] }, '2026-10-15').volumeDelta).toBeNull()
   })
 })

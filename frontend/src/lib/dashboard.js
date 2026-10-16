@@ -1,4 +1,5 @@
-import { workoutVolume, workoutDay, workoutAt } from './history.js'
+import { workoutVolume, workoutDay, workoutAt, streakWeeks } from './history.js'
+import { weekTally } from './queue.js'
 import { e1rmSeries, bestSetOf, formulaOf } from './onerm.js'
 import { weekKey, weekStartOf, isoOf, todayISO, exerciseNameText } from './format.js'
 import { fatigueStateOf } from './recovery-view.js'
@@ -91,4 +92,13 @@ export function recoveryGroups(fatigue = {}) {
   const g = { ready: [], recovering: [], fatigued: [] }
   for (const [slug, v] of Object.entries(fatigue)) g[fatigueStateOf(v)]?.push(slug)
   return g
+}
+
+// The "This week" card: sessions, volume vs last week, streak and PRs, all from the helpers above.
+export function weekSummary(S, today = todayISO()) {
+  const { done, planned } = weekTally(S, today)
+  const { cur, prev, delta } = weekVolume(S, today)
+  const wk = weekKey(today, weekStartOf(S))
+  const prs = recentPRs(S, Infinity, 30, Date.parse(today + 'T23:59:59')).filter(p => weekKey(p.d, weekStartOf(S)) === wk)
+  return { sessionsDone: done, sessionsPlanned: planned, volume: cur, volumePrev: prev, volumeDelta: delta, streak: streakWeeks(S), prsThisWeek: prs.length }
 }
