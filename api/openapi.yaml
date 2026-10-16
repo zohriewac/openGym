@@ -2514,6 +2514,13 @@ paths:
                   description: |
                     A change asked for in plain words, applied to the proposal now waiting. Cut to
                     the instance's `maxMessageLen` (1000 unless the admin changed it; 200–4000).
+                requestId:
+                  type: string
+                  maxLength: 64
+                  description: |
+                    Client-chosen id for this ask. Repeating it (a phone that locked before the answer
+                    arrived) returns the job already started, running or finished, and spends nothing
+                    more. Job ids are per profile; a status call never shows another profile's.
                 lang:
                   type: string
                   pattern: '^[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8})?$'
@@ -2551,6 +2558,13 @@ paths:
                   description: |
                     Anything the profile wants the Coach to know this time round. Cut to the
                     instance's `maxMessageLen` (1000 unless the admin changed it; 200–4000).
+                requestId:
+                  type: string
+                  maxLength: 64
+                  description: |
+                    Client-chosen id for this ask. Repeating it (a phone that locked before the answer
+                    arrived) returns the job already started, running or finished, and spends nothing
+                    more. Job ids are per profile; a status call never shows another profile's.
                 lang:
                   type: string
                   pattern: '^[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8})?$'
@@ -2584,6 +2598,13 @@ paths:
                 workoutId:
                   oneOf: [{ type: string, maxLength: 40 }, { type: 'null' }]
                   description: The workout to read; null or absent means the latest.
+                requestId:
+                  type: string
+                  maxLength: 64
+                  description: |
+                    Client-chosen id for this ask. Repeating it (a phone that locked before the answer
+                    arrived) returns the job already started, running or finished, and spends nothing
+                    more. Job ids are per profile; a status call never shows another profile's.
                 lang:
                   type: string
                   pattern: '^[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8})?$'

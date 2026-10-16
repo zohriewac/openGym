@@ -40,6 +40,7 @@ const PENDING_DAYS = 14
 const HANDLE_LENGTH = 16
 
 let job = null
+let ctl = null    // aborts the provider call of the run in flight
 let lastError = null
 let last = null   // how the most recent job ended — the same shape the server's status() reports
 // Reported to the screens through the same status shape the server answers with; a toast is
@@ -123,6 +124,7 @@ async function start(S, kind, opts) {
   const adapter = ADAPTERS[d.provider]
   if (d.mode !== 'byok' || !adapter) throw Object.assign(new Error(t('The Coach isn’t set up on this phone.')), { status: 503, code: 'off' })
 
+  ctl = new AbortController()
   job = { id: 'local-' + Date.now().toString(36), kind, state: 'running', startedAt: Date.now() }
   lastError = null
   // Not awaited: the screens poll, exactly as they do against a server.
@@ -139,7 +141,7 @@ async function run(S, kind, opts, d, adapter) {
   const attempt = await runPipeline({
     adapter, cfg: cfgOf(d), kind, payload,
     model: d.model || HTTP_PROVIDERS[d.provider].defaultModel, timeoutMs: timeoutFor(d.provider),
-    invokeOpts: { env: envOf(d, key), fetch: nativeFetch }
+    invokeOpts: { env: envOf(d, key), fetch: nativeFetch, signal: ctl.signal }
   })
   if (!attempt.ok) {
     // There is no admin card on a phone, so the reason has to reach the person holding it:
@@ -178,4 +180,13 @@ function workoutMetaOf(S, workoutId) {
 }
 
 // Test seam.
-export function _resetLocal() { job = null; lastError = null; last = null }
+/** The app is back on screen. A request the OS suspended may never answer (the native bridge keeps
+ *  its promise pending), which would leave "thinking…" up and refuse every new ask as busy. Give a
+ *  survivor a moment to land, then cut it loose: it ends as a timeout and the user can ask again. */
+export function localResumed(awayMs, graceMs = 8000) {
+  const mine = job
+  if (!mine || awayMs < 15000) return   // a short look at another app does not kill a request
+  setTimeout(() => { if (job === mine && ctl) ctl.abort() }, graceMs)
+}
+
+export function _resetLocal() { job = null; ctl = null; lastError = null; last = null }

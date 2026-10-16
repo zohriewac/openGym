@@ -71,7 +71,7 @@ function patchUser(uid, patch) {
 export function clearUser(uid) {
   try { fs.unlinkSync(userFile(uid)); } catch { /* nothing to clear */ }
   const queued = queue.findIndex(j => j.uid === uid);
-  if (queued >= 0) { queue.splice(queued, 1); inflight.delete(uid); }
+  if (queued >= 0) { queue.splice(queued, 1); inflight.delete(uid); live.delete(uid); }
   aborts.get(uid)?.abort();
   forgetSeq.set(uid, (forgetSeq.get(uid) || 0) + 1);
   invalidateCohort();
@@ -149,6 +149,7 @@ const queue = [];
 let running = 0;
 const inflight = new Set();     // uids with a job queued or running (FR-07 single-flight)
 const forgetSeq = new Map();    // uid → bumped by every clearUser; a job carries the value it saw at enqueue
+const live = new Map();         // uid → { id, rid } of the job queued or running, so a retried start can find it
 const aborts = new Map();       // uid → AbortController of the provider call in flight, for clearUser to pull
 
 class CoachError extends Error {
@@ -175,6 +176,14 @@ export function clampMessage(text) {
  */
 export function enqueue(uid, opts) {
   if (!cfgStore.isEnabled() || !cfgStore.isConnected()) throw new CoachError('off', 'the Coach is not set up on this instance');
+  // A client that lost the answer to its start (phone locked mid-request) retries with the same
+  // `requestId`: hand back the job it already started, running or finished, and spend nothing more.
+  const rid = opts.requestId ? String(opts.requestId).replace(/[^\w-]/g, '').slice(0, 64) : null;
+  if (rid) {
+    if (live.get(uid)?.rid === rid) return { id: live.get(uid).id };
+    const done = (readUser(uid).history || []).find(h => h.rid === rid);
+    if (done) return { id: done.id };
+  }
   if (inflight.has(uid)) throw new CoachError('busy', 'the Coach is already thinking about your training');
 
   const S = readState(uid);
@@ -214,6 +223,7 @@ export function enqueue(uid, opts) {
     id: crypto.randomBytes(8).toString('hex'),
     uid,
     forgetSeq: forgetSeq.get(uid) || 0,
+    rid,
     kind: opts.kind,                                  // 'create' | 'review' | 'debrief'
     trigger: opts.trigger || 'manual',                // 'manual' | 'scheduled'
     workoutId: opts.workoutId ? String(opts.workoutId).slice(0, 40) : null,
@@ -225,6 +235,7 @@ export function enqueue(uid, opts) {
     startedAt: Date.now()
   };
   inflight.add(uid);
+  live.set(uid, { id: job.id, rid });
   patchUser(uid, { current: { id: job.id, kind: job.kind, state: 'queued', startedAt: job.startedAt } });
   queue.push(job);
   pump();
@@ -237,7 +248,7 @@ function pump() {
     running++;
     execute(job)
       .catch(e => { console.error('coach job crashed', job.id, e); finish(job, { outcome: 'failed', errorClass: 'internal' }); })
-      .finally(() => { running--; inflight.delete(job.uid); pump(); });
+      .finally(() => { running--; inflight.delete(job.uid); live.delete(job.uid); pump(); });
   }
 }
 
@@ -261,7 +272,7 @@ function finish(job, result) {
   if ((forgetSeq.get(job.uid) || 0) !== job.forgetSeq) return;
   const rec = readUser(job.uid);
   const history = [...(rec.history || []), {
-    id: job.id, kind: job.kind, trigger: job.trigger, outcome: result.outcome,
+    id: job.id, rid: job.rid || undefined, kind: job.kind, trigger: job.trigger, outcome: result.outcome,
     errorClass: result.errorClass || null, at: Date.now(),
     // "Nothing to change" is an answer with a reason attached, and throwing the reason away
     // leaves the user with a job that finished and nothing to show for it. It lives here, in

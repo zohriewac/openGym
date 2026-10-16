@@ -75,6 +75,7 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
         // only a sanity ceiling so an oversized string is not carried further than it has to be.
         const job = jobs.enqueue(user.id, {
           kind: 'create',
+          requestId: body.requestId,
           intake: body.intake || null,
           lang: body.lang,
           refine: body.refine ? String(body.refine).slice(0, cfgStore.MAX_MESSAGE_LEN_CEILING) : null
@@ -89,6 +90,7 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
       try {
         const job = jobs.enqueue(user.id, {
           kind: 'review',
+          requestId: body.requestId,
           lang: body.lang,
           note: body.note ? String(body.note).slice(0, cfgStore.MAX_MESSAGE_LEN_CEILING) : null
         });
@@ -101,7 +103,7 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
       const user = guard(req, res); if (!user) return;
       const body = await readBody(req);
       try {
-        const job = jobs.enqueue(user.id, { kind: 'debrief', lang: body.lang, workoutId: body.workoutId ? String(body.workoutId).slice(0, 40) : null });
+        const job = jobs.enqueue(user.id, { kind: 'debrief', requestId: body.requestId, lang: body.lang, workoutId: body.workoutId ? String(body.workoutId).slice(0, 40) : null });
         json(res, 202, { job });
       } catch (e) { failEnqueue(res, e); }
     },

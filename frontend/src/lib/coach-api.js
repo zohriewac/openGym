@@ -10,6 +10,7 @@ import { api } from './api.js'
 import { DEMO } from './demo.js'
 import { MOBILE } from './mobile.js'
 import { t, getLang } from './i18n.js'
+import { loadAwaited, saveAwaited, startOnce, onForeground } from './coach-resume.js'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 
@@ -51,22 +52,22 @@ const local = async () => {
 // seen running, so "running, then gone" cannot be the only way the chat learns a run ended: it
 // also compares the server's last outcome with the id the start request returned. Kept here,
 // at module level, because the plan the intake asks for is started on another screen.
-let awaited = null
+let awaited = loadAwaited()   // persisted: a WebView reload while locked must not lose the reply
 const track = r => {
-  if (r?.job?.id) awaited = r.job.id
+  if (r?.job?.id) { awaited = r.job.id; saveAwaited(awaited) }
   return r
 }
 export const awaitedJob = () => awaited
-export const settleAwaited = id => { if (!id || awaited === id) awaited = null }
+export const settleAwaited = id => { if (!id || awaited === id) { awaited = null; saveAwaited(null) } }
 
 export const coachStatus = async () => DEMO ? (await demo()).demoStatus() : LOCAL() ? (await local()).localStatus() : api('/api/coach/status')
-const _requestReview = async note => DEMO ? (await demo()).demoReview(S()) : LOCAL() ? (await local()).localReview(S(), note) : api('/api/coach/review', { method: 'POST', body: JSON.stringify({ note: note || '', lang: getLang() }) })
+const _requestReview = async note => DEMO ? (await demo()).demoReview(S()) : LOCAL() ? (await local()).localReview(S(), note) : startOnce(requestId => api('/api/coach/review', { method: 'POST', body: JSON.stringify({ note: note || '', lang: getLang(), requestId }) }))
 export const requestReview = (...a) => _requestReview(...a).then(track)
-const _requestPlan = async intake => DEMO ? (await demo()).demoPlan(S(), intake) : LOCAL() ? (await local()).localPlan(S(), intake) : api('/api/coach/plan', { method: 'POST', body: JSON.stringify({ intake, lang: getLang() }) })
+const _requestPlan = async intake => DEMO ? (await demo()).demoPlan(S(), intake) : LOCAL() ? (await local()).localPlan(S(), intake) : startOnce(requestId => api('/api/coach/plan', { method: 'POST', body: JSON.stringify({ intake, lang: getLang(), requestId }) }))
 export const requestPlan = (...a) => _requestPlan(...a).then(track)
-const _refinePlan = async text => DEMO ? (await demo()).demoRefine(S()) : LOCAL() ? (await local()).localRefine(S(), text) : api('/api/coach/plan', { method: 'POST', body: JSON.stringify({ refine: text, lang: getLang() }) })
+const _refinePlan = async text => DEMO ? (await demo()).demoRefine(S()) : LOCAL() ? (await local()).localRefine(S(), text) : startOnce(requestId => api('/api/coach/plan', { method: 'POST', body: JSON.stringify({ refine: text, lang: getLang(), requestId }) }))
 export const refinePlan = (...a) => _refinePlan(...a).then(track)
-const _requestDebrief = async workoutId => DEMO ? (await demo()).demoDebrief(S(), workoutId) : LOCAL() ? (await local()).localDebrief(S(), workoutId) : api('/api/coach/debrief', { method: 'POST', body: JSON.stringify({ workoutId: workoutId || null, lang: getLang() }) })
+const _requestDebrief = async workoutId => DEMO ? (await demo()).demoDebrief(S(), workoutId) : LOCAL() ? (await local()).localDebrief(S(), workoutId) : startOnce(requestId => api('/api/coach/debrief', { method: 'POST', body: JSON.stringify({ workoutId: workoutId || null, lang: getLang(), requestId }) }))
 export const requestDebrief = (...a) => _requestDebrief(...a).then(track)
 // The room: anonymous medians across the profiles on this instance that opted in. Only a
 // server has a room; a phone with its own key and the demo both answer locally.
@@ -134,7 +135,10 @@ export function useCoachStatus(active = true) {
     }
     loop.current = tick
     tick()
-    return () => { stopped = true; loop.current = null; clearTimeout(timer.current) }
+    // Back from a lock: timers were frozen and an in-flight poll or run may be dead. Ask now
+    // (and re-pace) instead of waiting out the idle interval.
+    const off = onForeground(away => { clearTimeout(timer.current); tick(); if (LOCAL()) local().then(m => m.localResumed(away)) })
+    return () => { stopped = true; loop.current = null; clearTimeout(timer.current); off() }
   }, [active, refresh])
 
   return { ...state, refresh }
