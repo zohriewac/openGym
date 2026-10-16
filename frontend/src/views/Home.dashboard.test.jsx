@@ -44,6 +44,14 @@ describe('Home dashboard', () => {
     expect(host.textContent).toContain('Welcome!')
     expect(host.innerHTML).not.toContain('NaN')
   })
+  it('hero first, progress next, check-in last; welcome has one primary action', () => {
+    mount({ workouts: [bench(0, 90)] })
+    const order = [...host.querySelectorAll('.home-hero, .dash-grid, .home-sec')].map(e => e.className.split(' ')[e.classList.contains('home-hero') ? 1 : 0])
+    expect(order[0]).toBe('dash-hero')
+    expect(host.querySelector('#app, .narrow').lastElementChild.textContent).toContain('Check in')
+    mount({ workouts: [], routines: [], bodyweight: [] })
+    expect(host.querySelectorAll('.home-welcome .btn.primary')).toHaveLength(1)
+  })
   it('with history: ring, volume, consistency, strength, recovery render', () => {
     mount({ workouts: [bench(30, 80), bench(14, 85), bench(0, 90)], bodyweight: [{ d: daysAgo(1), w: 80, t: 1 }, { d: daysAgo(0), w: 81, t: 2 }] })
     expect(host.querySelector('.dash-grid svg.ring')).toBeTruthy()
