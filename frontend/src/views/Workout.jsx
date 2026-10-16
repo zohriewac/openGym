@@ -12,7 +12,7 @@ import { effectiveRoutines, effectiveRoutineIds, lastEntryFor, prevSetAt, bestWe
 import { fmtNum, fmtPlate, exerciseNameText, fmtDate, fmtDaysAgo, todayISO, exCount, DAYN } from '../lib/format.js'
 import { speedUnitOf, toSpeed, fromSpeed } from '../lib/speed.js'
 import { clampIncline, hasIncline, inclineFits, inclineFrom, INCLINE_STEP } from '../lib/incline.js'
-import { beep, vibrate, unlock } from '../lib/sound.js'
+import { beep, vibrate, tick, unlock } from '../lib/sound.js'
 import { livePR } from '../lib/onerm.js'
 import { pinState } from '../lib/queue.js'
 import { t, tn, exerciseNameFor, exerciseNameClass } from '../lib/i18n.js'
@@ -1678,7 +1678,7 @@ function ActiveWorkout() {
     if (editing) return
     if (prHit) {
       useUI.getState().toast(t('New PR: {0} {1}', exerciseNameText(exOr(A.entries[idx].id)), fmtNum(Math.round(prHit.est)) + ' ' + S.unit))
-      vibrate([20, 40, 50])
+      tick('commit')   // Taptic Engine on iOS (HapticBridge.swift), a short buzz elsewhere
     }
     if (workoutDone) workoutCompleteSheet()
     else if (exJustDone && cardioEntry) useUI.getState().toast(t('Cardio logged'))
