@@ -1409,6 +1409,16 @@ export const PT_BR_OVERRIDES = {
   'Resting heart rate': 'Frequência cardíaca em repouso',
   'Before 10:00': 'Antes das 10:00',
   '10:00 or later': '10:00 ou depois',
+  'Why did my bench stall?': 'Por que meu supino estagnou?',
+  'Adjust my plan': 'Ajustar meu plano',
+  'Jump to latest': 'Ir para a mais recente',
+  'Clear the conversation?': 'Limpar a conversa?',
+  'This removes the messages on this screen. What the Coach proposed stays under “Everything the Coach proposed”.': 'Isso remove as mensagens desta tela. O que o Coach propôs continua em “Tudo o que o Coach propôs”.',
+  'Clear the conversation': 'Limpar a conversa',
+  'Conversation cleared': 'Conversa limpa',
+  'What the Coach reads': 'O que o Coach lê',
+  'Ask me about your training, or start with one of these.': 'Pergunte sobre seu treino ou comece por um destes.',
+  'Stop': 'Parar',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES,

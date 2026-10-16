@@ -237,4 +237,38 @@ describe('the Coach chat', () => {
     await mount(null, null, { community: true })
     expect(byText(/^Compare$/)).toBeTruthy()
   })
+
+  it('shows suggested prompts on an empty thread and sends one as a review note', async () => {
+    const api = await import('../lib/coach-api.js')
+    await mount(null)
+    expect(container.querySelector('.chat-start')).toBeTruthy()
+    await click([...container.querySelectorAll('.chat-start .qchip')].find(b => /bench stall/.test(b.textContent)))
+    expect(api.requestReview).toHaveBeenCalledWith('Why did my bench stall?')
+    expect(mocks.S.coach.chat.at(-1).text).toBe('Why did my bench stall?')
+  })
+
+  it('renders the Coach’s bold and bullets, and lists what the Coach reads', async () => {
+    const S = state()
+    S.coach.chat.push({ id: 'c2', role: 'coach', kind: 'text', text: 'Try **heavier** sets:\n- squat\n- row', at: 2 })
+    await mount(null, null, { S })
+    expect(container.querySelector('.bub strong').textContent).toBe('heavier')
+    expect([...container.querySelectorAll('.bub li')].map(l => l.textContent).slice(-2)).toEqual(['squat', 'row'])
+    expect(container.querySelector('.ctx-row').textContent).toContain('0 workouts')
+    expect(container.querySelector('.chat-start')).toBeFalsy()
+  })
+
+  it('offers Try again on a failed run and re-asks the last message', async () => {
+    const api = await import('../lib/coach-api.js')
+    const S = state()
+    S.coach.chat.push({ id: 'u2', role: 'user', kind: 'text', text: 'trim my volume', at: 2 }, { id: 'e1', role: 'coach', kind: 'error', text: 'Nope', at: 3 })
+    await mount(null, null, { S })
+    expect(container.querySelector('[role=alert]').textContent).toBe('Nope')
+    await click(byText(/Try again/))
+    expect(api.requestReview).toHaveBeenCalledWith('trim my volume')
+  })
+
+  it('shows no Stop button while the coach-api has no cancel call', async () => {
+    await mount(null, { id: 'j1', kind: 'review', state: 'running', startedAt: Date.now() })
+    expect(byText(/^Stop$/)).toBeFalsy()
+  })
 })
