@@ -194,6 +194,26 @@ score out of ten, what went well, what to watch, and what to do next time, each 
 session's own numbers. A debrief cannot carry a change; an answer that tries is refused by the
 validator rather than trimmed. The card is kept in the Coach's history like everything else.
 
+### Talking to the Coach
+
+Besides plans, reviews and debriefs, the Coach answers free-text questions about your training.
+A message goes to the provider with the last twelve turns of the conversation and the same
+training summary a review uses (so the consent screen's list is still the whole story). The
+reply streams in as it is written where the provider supports it (Anthropic, OpenAI, Gemini,
+OpenRouter and compatible endpoints) and arrives whole otherwise. The Claude SDK and Codex CLI
+providers do not chat.
+
+- The conversation (last 40 messages) is kept on the server in `./data/coach/chat-<profile>.json`,
+  not in the synced state, so a reload or a second device reads it back, and a reply that was
+  still being written when the page reloaded is there when it finishes. Withdrawing consent or
+  deleting the profile deletes it.
+- One turn at a time per profile, and ten messages a minute per profile (`COACH_CHAT_PER_MINUTE`).
+  Each turn counts against the instance's daily cap like a job does.
+- Failures come back as a class (`rate`, `busy`, `cap`, `auth`, `timeout`, `provider`, …) the app
+  words itself; the provider's own message goes to the admin log only.
+- The API is `GET/POST /api/coach/chat`, `POST /api/coach/chat/cancel` and `/clear`; see
+  `api/openapi.yaml`. A phone with its own key runs the same turn locally.
+
 ### Comparing with others on the instance
 
 Off unless the admin turns it on (**Settings → Account → Admin dashboard**, the **AI Coach** card →

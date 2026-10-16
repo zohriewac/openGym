@@ -11,6 +11,7 @@ import { DEMO } from './demo.js'
 import { MOBILE } from './mobile.js'
 import { t, getLang } from './i18n.js'
 import { loadAwaited, saveAwaited, startOnce, onForeground } from './coach-resume.js'
+import { sendChat, waitForReply } from './coach-chat.js'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 
@@ -76,6 +77,21 @@ export const setCohortShare = async share => (DEMO || LOCAL()) ? { ok: true, sha
 export const resolvePending = async body => DEMO ? (await demo()).demoResolve() : LOCAL() ? (await local()).localResolve(body) : api('/api/coach/pending/resolve', { method: 'POST', body: JSON.stringify(body) })
 export const forgetCoach = async () => DEMO ? (await demo()).demoResolve() : LOCAL() ? (await local()).localForget() : api('/api/coach/forget', { method: 'POST', body: '{}' })
 export const disclosure = async () => DEMO ? (await demo()).demoDisclosure() : LOCAL() ? (await local()).localDisclosure() : api('/api/coach/disclosure')
+
+/* The conversation. History is the server's (or the phone's own file): a reload reads it back,
+   and `busy` says a reply is still being written. chatSend streams the reply through onDelta and
+   resolves with the stored message; every failure is an Error with `.code` (see JOB_ERRORS and
+   chatErrorText) and `.partial`, the text that had arrived. */
+export const chatHistory = async () => DEMO ? (await demo()).demoChatHistory() : LOCAL() ? (await local()).localChatHistory() : api('/api/coach/chat')
+export const chatSend = async (message, opts = {}) => {
+  if (DEMO) return (await demo()).demoChatSend(message, opts)
+  if (LOCAL()) return (await local()).localChatSend(S(), message, opts)
+  return sendChat(message, { lang: getLang(), ...opts })
+}
+export const chatCancel = async () => DEMO ? (await demo()).demoChatCancel() : LOCAL() ? (await local()).localChatCancel() : api('/api/coach/chat/cancel', { method: 'POST', body: '{}' })
+export const chatClear = async () => DEMO ? (await demo()).demoChatClear() : LOCAL() ? (await local()).localChatClear() : api('/api/coach/chat/clear', { method: 'POST', body: '{}' })
+/** A reply was in flight when the connection dropped or the page reloaded: wait for it to land. */
+export { waitForReply as chatWaitForReply }
 
 /* Whose provider account this profile is about to spend. Its own call because the constraint is
    that the Coach screen states it too, not just the admin card — and because in instance mode a
@@ -169,6 +185,17 @@ export const JOB_ERRORS = {
   get internal() { return t('Something went wrong on the server.') }
 }
 
+// The classes only a chat turn can fail with (api/coach/chat.js); the rest are JOB_ERRORS'.
+// Kept apart so the failure lines every locale pack must carry stay the ones jobs can raise.
+export const CHAT_ERRORS = {
+  get rate() { return t('You’re sending messages too fast. Wait a moment and try again.') },
+  get empty() { return t('There’s nothing to send.') },
+  get toolarge() { return t('Your training data is too large to send.') },
+  get unsupported() { return t('Chat isn’t available with this Coach provider.') },
+  get cancelled() { return t('Stopped.') },
+  get network() { return t('The connection dropped. The Coach may still be writing; check again in a moment.') }
+}
+
 // The same failures on a phone that brought its own key: there is no instance owner to
 // check anything, the person reading this is the operator, and the provider's own words
 // are the only thing that lets them fix it (a spent quota, a wrong model, a rejected key).
@@ -183,7 +210,11 @@ export const BYOK_ERRORS = {
 /** The line the person sees for a failed job — with the reason attached where they can act on it. */
 export function jobErrorText(cls, detail) {
   const own = LOCAL()
-  const base = (own && BYOK_ERRORS[cls]) || JOB_ERRORS[cls] || (own ? BYOK_ERRORS.internal : JOB_ERRORS.internal)
+  const base = (own && BYOK_ERRORS[cls]) || JOB_ERRORS[cls] || CHAT_ERRORS[cls] || (own ? BYOK_ERRORS.internal : JOB_ERRORS.internal)
   const why = own && detail ? String(detail).trim().slice(0, 300) : ''
   return why ? `${base}\n${why}` : base
 }
+
+/** The line for a failed chat turn (the Error chatSend rejected with). On a phone with its own
+ *  key the provider's words ride in `message`; on a server they stay in the admin card. */
+export const chatErrorText = e => jobErrorText(e?.code, e?.message)

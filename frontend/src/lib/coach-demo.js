@@ -207,6 +207,20 @@ export const demoDebrief = (S, workoutId) => {
   return start('debrief', () => buildDebrief(S, workoutId))
 }
 export const demoResolve = () => { pending = null; return { ok: true } }
+
+// The conversation: no model behind it, one canned line that says so, kept in memory.
+let chat = []
+export const demoChatHistory = () => ({ messages: chat, busy: false, supported: true, maxMessageLen: 1000 })
+export const demoChatClear = () => { chat = []; return { ok: true } }
+export const demoChatCancel = () => ({ ok: true, cancelled: false })
+export function demoChatSend(message, { onStart, onDelta } = {}) {
+  const now = Date.now()
+  const reply = { id: 'demo-' + now.toString(36), role: 'coach', text: t('This is the demo, so there is no AI behind the chat. On your own server the Coach reads your training and answers here.'), at: now }
+  chat = [...chat, { id: 'demo-u' + now.toString(36), role: 'user', text: String(message || '').slice(0, 1000), at: now }, reply].slice(-40)
+  if (onStart) onStart(reply.id)
+  if (onDelta) onDelta(reply.text)
+  return { message: reply }
+}
 export const demoDisclosure = () => ({
   provider: 'demo', providerLabel: t('the configured AI provider'),
   categories: ['plan', 'training', 'bodyweight', 'profile', 'prefs'], version: 1

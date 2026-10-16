@@ -2704,6 +2704,123 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '503': { $ref: '#/components/responses/CoachOff' }
 
+  /api/coach/chat:
+    get:
+      tags: [coach]
+      operationId: getCoachChat
+      summary: The Coach conversation
+      description: >-
+        The profile's chat history (the last 40 messages, kept server-side so a reload or a second
+        device reads it back). `busy` is true while a reply is still being written: the reply is
+        stored when it completes, so a client that reloaded mid-answer polls this until `busy`
+        is false. `supported` is false for providers that run as a CLI/SDK runtime.
+      responses:
+        '200':
+          description: History and state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        role: { type: string, enum: [user, coach] }
+                        text: { type: string }
+                        at: { type: integer, description: Epoch milliseconds. }
+                        partial: { type: boolean, description: The reply was cut short (cancelled or failed). }
+                  busy: { type: boolean }
+                  supported: { type: boolean }
+                  maxMessageLen: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/CoachOff' }
+    post:
+      tags: [coach]
+      operationId: postCoachChat
+      summary: Send one message and get the Coach's reply
+      description: |
+        One turn: the message and the profile's recent training summary go to the provider with
+        the stored history. One turn at a time per profile (`busy`), a per-profile rate window
+        (`rate`, with `Retry-After`) and the instance's daily cap (`cap`) apply.
+
+        With `stream: true` (or `Accept: text/event-stream`) the answer is server-sent events,
+        each frame `data: <json>`: `{type:'start',id}`, `{type:'delta',text}`, then
+        `{type:'done',message}` or `{type:'error',code,error,partial?}`. A refusal before the turn
+        is accepted is an ordinary JSON status instead. Otherwise the answer is one JSON body when
+        the reply is whole.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, description: Clamped to the admin's `maxMessageLen`. }
+                lang: { type: string }
+                stream: { type: boolean }
+            example: { message: How is my bench going?, stream: true }
+      responses:
+        '200':
+          description: The reply (JSON mode), or an event stream.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: object, properties: { id: { type: string }, role: { type: string, const: coach }, text: { type: string }, at: { type: integer } } }
+            text/event-stream:
+              schema: { type: string }
+        '400': { $ref: '#/components/responses/CoachRefused' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/CoachRefused' }
+        '409': { $ref: '#/components/responses/CoachRefused' }
+        '413': { $ref: '#/components/responses/CoachRefused' }
+        '429': { $ref: '#/components/responses/CoachRefused' }
+        '501': { $ref: '#/components/responses/CoachRefused' }
+        '502': { $ref: '#/components/responses/CoachRefused' }
+        '503': { $ref: '#/components/responses/CoachOff' }
+        '504': { $ref: '#/components/responses/CoachRefused' }
+
+  /api/coach/chat/cancel:
+    post:
+      tags: [coach]
+      operationId: postCoachChatCancel
+      summary: Stop the reply being written
+      description: What was written so far is kept as a `partial` message.
+      responses:
+        '200':
+          description: Whether a turn was running.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  cancelled: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/CoachOff' }
+
+  /api/coach/chat/clear:
+    post:
+      tags: [coach]
+      operationId: postCoachChatClear
+      summary: Delete the conversation
+      responses:
+        '200':
+          description: Cleared.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/CoachOff' }
+
   /api/coach/account:
     get:
       tags: [coach]

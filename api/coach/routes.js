@@ -6,6 +6,8 @@
  */
 import * as cfgStore from './config.js';
 import * as jobs from './jobs.js';
+import * as chat from './chat.js';
+import { cancelChat, clearChat } from './chat-store.js';
 import { computeCohort } from './cohort.js';
 import { adapterFor } from './adapters/index.js';
 import { canDropPrivileges } from './adapters/spawn.js';
@@ -24,7 +26,26 @@ const USER_ERROR = {
   shared: cfgStore.SHARED_ACCOUNT_REFUSAL,
   unprivileged: 'the Coach is switched off on this instance for safety reasons'
 };
-const HTTP_FOR = { off: 503, busy: 409, cap: 429, consent: 403, shared: 409, unprivileged: 503 };
+// Chat turns. The provider's own words stay in the admin log; these are what the person reads
+// where the app has no line of its own (the app's CHAT_ERRORS/JOB_ERRORS are keyed by `code`).
+const CHAT_WORDS = {
+  rate: 'too many messages, wait a moment and try again',
+  empty: 'there is nothing to send',
+  toolarge: 'your training data is too large to send',
+  unsupported: 'chat is not available with this provider',
+  timeout: 'the Coach took too long and gave up',
+  auth: 'the Coach could not sign in to its provider',
+  missing: 'the Coach is not installed properly on this instance',
+  provider: 'the Coach could not answer',
+  unusable: 'the Coach sent an empty answer',
+  cancelled: 'stopped'
+};
+const HTTP_FOR = {
+  off: 503, busy: 409, cap: 429, consent: 403, shared: 409, unprivileged: 503,
+  rate: 429, empty: 400, toolarge: 413, unsupported: 501, timeout: 504, auth: 502, missing: 502, provider: 502, unusable: 502, cancelled: 499
+};
+
+const errorBody = e => ({ error: USER_ERROR[e.code] || CHAT_WORDS[e.code] || e.message, code: e.code, ...(e.retryAfter ? { retryAfter: e.retryAfter } : {}) });
 
 export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
   /** Every user route starts the same way: signed in, feature on, feature reachable. The class
@@ -37,8 +58,26 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
     return user;
   };
   const failEnqueue = (res, e) => {
-    if (e instanceof jobs.CoachError) return json(res, HTTP_FOR[e.code] || 400, { error: USER_ERROR[e.code] || e.message, code: e.code });
+    if (e instanceof jobs.CoachError) return json(res, HTTP_FOR[e.code] || 400, errorBody(e), e.retryAfter ? { 'Retry-After': String(e.retryAfter) } : undefined);
     throw e;
+  };
+  /** One reply as server-sent events. `open` is the moment the turn is accepted: before it a
+   *  refusal is still a plain JSON status, after it a failure can only be an event. */
+  const sseReply = async (req, res, user, body) => {
+    const emit = ev => { if (!res.writableEnded && !res.destroyed) res.write('data: ' + JSON.stringify(ev) + '\n\n'); };
+    const open = id => {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store, no-transform', 'X-Accel-Buffering': 'no' });
+      emit({ type: 'start', id });
+    };
+    try {
+      const message = await chat.send(user.id, { message: body.message, lang: body.lang, onStart: open, onDelta: text => emit({ type: 'delta', text }) });
+      emit({ type: 'done', message });
+    } catch (e) {
+      if (!(e instanceof jobs.CoachError)) throw e;
+      if (!res.headersSent) return failEnqueue(res, e);
+      emit({ type: 'error', ...errorBody(e), ...(e.partial ? { partial: e.partial } : {}) });
+    }
+    res.end();
   };
 
   return {
@@ -106,6 +145,29 @@ export function coachRoutes({ json, readBody, readSession, requireAdmin }) {
         const job = jobs.enqueue(user.id, { kind: 'debrief', requestId: body.requestId, lang: body.lang, workoutId: body.workoutId ? String(body.workoutId).slice(0, 40) : null });
         json(res, 202, { job });
       } catch (e) { failEnqueue(res, e); }
+    },
+
+    /* The conversation. History is the server's (a reload or a second device reads it back);
+       a turn streams as server-sent events when asked, else answers once when it is whole. */
+    'GET /api/coach/chat': async (req, res) => {
+      const user = guard(req, res); if (!user) return;
+      json(res, 200, chat.view(user.id));
+    },
+    'POST /api/coach/chat': async (req, res) => {
+      const user = guard(req, res); if (!user) return;
+      const body = await readBody(req);
+      if (body.stream === true || /text\/event-stream/.test(req.headers.accept || '')) return sseReply(req, res, user, body);
+      try { json(res, 200, { message: await chat.send(user.id, { message: body.message, lang: body.lang }) }); }
+      catch (e) { failEnqueue(res, e); }
+    },
+    'POST /api/coach/chat/cancel': async (req, res) => {
+      const user = guard(req, res); if (!user) return;
+      json(res, 200, { ok: true, cancelled: cancelChat(user.id) });
+    },
+    'POST /api/coach/chat/clear': async (req, res) => {
+      const user = guard(req, res); if (!user) return;
+      clearChat(user.id);
+      json(res, 200, { ok: true });
     },
 
     /* How this profile sits against everyone else on the instance who opted in: medians only,

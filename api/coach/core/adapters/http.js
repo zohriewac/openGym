@@ -119,11 +119,18 @@ async function* sseEvents(res, idleMs, signal) {
   const stop = async err => { try { await reader.cancel(); } catch { /* already gone */ } throw err; };
   let buf = '';
   for (;;) {
-    let timer;
-    const idle = new Promise((_, rej) => { timer = setTimeout(() => rej(Object.assign(new Error('idle'), { idle: true })), idleMs); });
+    let timer, onAbort;
+    // The abort that cancelled the request ended with its headers; the body needs its own listener.
+    const idle = new Promise((_, rej) => {
+      timer = setTimeout(() => rej(Object.assign(new Error('idle'), { idle: true })), idleMs);
+      onAbort = () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+      if (signal) { if (signal.aborted) onAbort(); else signal.addEventListener('abort', onAbort, { once: true }); }
+    });
     let chunk;
-    try { chunk = await Promise.race([reader.read(), idle]); } catch (e) { await stop(e); } finally { clearTimeout(timer); }
-    if (signal && signal.aborted) await stop(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+    try { chunk = await Promise.race([reader.read(), idle]); } catch (e) { await stop(e); } finally {
+      clearTimeout(timer);
+      if (signal) signal.removeEventListener('abort', onAbort);
+    }
     if (chunk.done) break;
     buf += dec.decode(chunk.value, { stream: true });
     const cut = buf.lastIndexOf('\n\n');

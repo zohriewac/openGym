@@ -17,6 +17,7 @@
 //     riding into a backup or a sync.
 import * as payloadLib from '../../../api/coach/core/payload.js'
 import { runPipeline } from '../../../api/coach/core/pipeline.js'
+import { chatSystem, toProviderMessages, CHAT_MAX_TOKENS } from '../../../api/coach/core/chat-core.js'
 import { HTTP_PROVIDERS, baseUrlFor } from '../../../api/coach/core/providers.js'
 import anthropic from '../../../api/coach/core/adapters/anthropic.js'
 import openai from '../../../api/coach/core/adapters/openai.js'
@@ -179,6 +180,64 @@ function workoutMetaOf(S, workoutId) {
   return w ? { id: w.id, d: w.d, name: w.name || null } : null
 }
 
+/* ---------- the conversation ----------
+   The same turn the server runs (api/coach/chat.js), on this phone: history in the device file,
+   the provider called directly, today's count against a cap of its own (a chat is many small
+   calls, and the job cap of ten would end it after one afternoon). */
+export const LOCAL_CHAT_DAILY_CAP = 60
+const CHAT_KEEP = 40
+let chatCtl = null
+
+const chatErr = (message, code, status) => Object.assign(new Error(message), { code, status })
+const chatStamp = () => Math.random().toString(36).slice(2, 10)
+
+export async function localChatHistory() {
+  const d = await loadCoachDevice()
+  return { messages: d.chat || [], busy: !!chatCtl, supported: true, maxMessageLen: 1000 }
+}
+export function localChatCancel() { const c = chatCtl; if (c) c.abort(); return { ok: true, cancelled: !!c } }
+export async function localChatClear() { await saveCoachDevice({ chat: [] }); return { ok: true } }
+
+async function chatAllowed(S) {
+  if (chatCtl) throw chatErr(t('The Coach is already thinking about your training.'), 'busy', 409)
+  if (!S?.coach?.consent?.agreedAt) throw chatErr(t('The Coach needs your go-ahead first.'), 'consent', 403)
+  const d = await loadCoachDevice()
+  const adapter = ADAPTERS[d.provider]
+  if (d.mode !== 'byok' || !adapter) throw chatErr(t('The Coach isn’t set up on this phone.'), 'off', 503)
+  const used = d.chatDaily && d.chatDaily.d === todayISO() ? d.chatDaily.n : 0
+  if (used >= LOCAL_CHAT_DAILY_CAP) throw chatErr(t('The Coach is taking a breather. You’ve used today’s {0} runs on this phone.', LOCAL_CHAT_DAILY_CAP), 'cap', 429)
+  await saveCoachDevice({ chatDaily: { d: todayISO(), n: used + 1 } })
+  return { d, adapter }
+}
+
+const chatCode = r => r.cancelled ? 'cancelled' : r.timedOut ? 'timeout' : r.code !== 0 ? (/auth|401|403|api key/i.test(r.stderr || '') ? 'auth' : 'provider') : !r.text ? 'unusable' : null
+
+export async function localChatSend(S, message, { onStart, onDelta, signal } = {}) {
+  const text = String(message || '').trim().slice(0, 1000)
+  if (!text) throw chatErr(t('There’s nothing to send.'), 'empty', 400)
+  const { d, adapter } = await chatAllowed(S)
+  const abort = chatCtl = new AbortController()
+  if (signal) signal.addEventListener('abort', () => abort.abort(), { once: true })
+  try {
+    const system = chatSystem(payloadLib.build(S, { handle: await handle(), kind: 'review', note: null, lang: getLang() }))
+    if (!system) throw chatErr(t('Your training data is too large to send.'), 'toolarge', 413)
+    const history = [...(d.chat || []), { id: chatStamp(), role: 'user', text, at: Date.now() }].slice(-CHAT_KEEP)
+    await saveCoachDevice({ chat: history })
+    const id = chatStamp()
+    if (onStart) onStart(id)
+    const r = await adapter.chat({
+      cfg: cfgOf(d), system, messages: toProviderMessages(history), model: d.model || HTTP_PROVIDERS[d.provider].defaultModel,
+      env: envOf(d, await getApiKey()), fetch: nativeFetch, timeoutMs: timeoutFor(d.provider), signal: abort.signal, maxTokens: CHAT_MAX_TOKENS
+    }, onDelta)
+    const code = chatCode(r)
+    const reply = { id, role: 'coach', text: r.text || '', at: Date.now(), ...(code ? { partial: true } : {}) }
+    if (reply.text) await saveCoachDevice({ chat: [...history, reply].slice(-CHAT_KEEP) })
+    // The person holding the phone is the operator: the provider's own words go with the failure.
+    if (code) throw Object.assign(chatErr(String(r.stderr || code).slice(0, 300), code, 0), { partial: r.text || '' })
+    return { message: reply }
+  } finally { chatCtl = null }
+}
+
 // Test seam.
 /** The app is back on screen. A request the OS suspended may never answer (the native bridge keeps
  *  its promise pending), which would leave "thinking…" up and refuse every new ask as busy. Give a
@@ -189,4 +248,4 @@ export function localResumed(awayMs, graceMs = 8000) {
   setTimeout(() => { if (job === mine && ctl) ctl.abort() }, graceMs)
 }
 
-export function _resetLocal() { job = null; ctl = null; lastError = null; last = null }
+export function _resetLocal() { job = null; ctl = null; lastError = null; last = null; chatCtl = null }
